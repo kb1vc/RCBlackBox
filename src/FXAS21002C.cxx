@@ -12,6 +12,12 @@ namespace BlackBox {
 
     obj->serviceFIFO(gpio, level, tick);
   }
+
+  static void dReadyIntCallback(int gpio, int level, unsigned int tick, void * obj) {
+    FXAS21002C * gyro_p = (FXAS21002C *) obj; 
+
+    obj->serviceDReady(gpio, level, tick);
+  }
   
   FXAS21002C::FXAS21002C(unsigned char bus, unsigned char addr, 
 			 unsigned char int1_pin,
@@ -35,7 +41,7 @@ namespace BlackBox {
     i2cClose(i2c_handle);
   }
 
-  void writeByte(unsigned char reg, unsigned char dat) {
+  void FXAS21002C::writeByte(unsigned char reg, unsigned char dat) {
     int stat = i2cWriteByteData(i2c_handle, reg, dat); 
     
     if(stat != 0) {
@@ -44,7 +50,7 @@ namespace BlackBox {
     }
   }
 
-  unsigned char readByte(unsigned char reg) {
+  unsigned char FXAS21002C::readByte(unsigned char reg) {
     int ret = i2cReadByteData(i2c_handle, reg); 
     
     if(ret < 0) {
@@ -55,7 +61,7 @@ namespace BlackBox {
     return (unsigned char) (ret & 0xff);
   }
 
-  void readBlock(unsigned char reg, int len, char * buf) {
+  void FXAS21002C::readBlock(unsigned char reg, int len, char * buf) {
     int stat = i2cReadDevice(i2c_handle, buf, len); 
     if(stat < 0) {
       std::cerr << "Got i2cReadDevice error: " << stat << "\n";
@@ -145,7 +151,9 @@ namespace BlackBox {
 
       // wrap to zero so we can read the status register and all the data
       // at once. 
-      writeByte(CTRL_REG3_RW, 0);       
+      writeByte(CTRL_REG3_RW, 0);
+
+      int stat = gpioSetISRFuncEx(int1_pin, RISING_EDGE, 0, dReadyIntCallback, this);      
     }
 
     // disable rate threshold    
@@ -171,7 +179,7 @@ namespace BlackBox {
     }
   }
 
-  void FXAS21002C::serviceFIFO(int gpio, int level, unsigned int tick) {
+  void FXAS21002C::serviceDReady(int gpio, int level, unsigned int tick) {
     // read the rates and store them in the outbound rate queue. 
     if(readDR(rate_block[0])) {
       // lock the queue

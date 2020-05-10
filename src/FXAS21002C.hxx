@@ -15,6 +15,9 @@ namespace BlackBox {
     FXAS21002C(unsigned char bus, unsigned char addr,
 	       unsigned char int1_pin, unsigned char int2_pin);
 
+    ~FXAS21002C();
+
+
 #pragma pack(push, 1)    
     // This version of the Rate struct contains a sequence
     // number as well as the gyro rates.
@@ -31,6 +34,24 @@ namespace BlackBox {
     
   protected:
 
+    void writeByte(unsigned char reg, unsigned char dat);
+    unsigned char readByte(unsigned char reg);
+
+    void readBlock(unsigned char reg, int len, char * buf);
+
+    int readFIFO();
+    
+    void FXAS21002C::start(CR1_DATA_RATE data_rate);
+    
+    int readDR(IRates & rates);
+
+    enum Mode { FIFO, DR_INT, DR_POLL };
+  
+    void init(Mode mode);
+
+    void serviceFIFO(int gpio, int level, unsigned int tick);
+    void serviceDReady(int gpio, int level, unsigned int tick);
+    
 #pragma pack(push, 1)
     // want this in a contiguous 6 byte block.
     // This is the structure that mimics the layout of the
@@ -177,14 +198,9 @@ namespace BlackBox {
     static const unsigned char CR3_EXTCTRLEN = 0x4;
     static const unsigned char CR3_FS_DOUBLE = 0x1;
     
-    enum Mode { FIFO, DR_INT, DR_POLL };
-  
-    void init(Mode mode);
 
   protected:
     int i2c_handle; 
-
-    void writeI2CByte(unsigned char reg, unsigned char dat); 
   };
 
 }
