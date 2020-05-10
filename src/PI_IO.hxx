@@ -5,4 +5,7 @@
  * 
  * @return true if all was well, false otherwise. 
  */
-bool initPIGPIO();
+namespace BlackBox { 
+  bool initPIGPIO();
+}
+

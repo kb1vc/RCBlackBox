@@ -7,21 +7,21 @@
 
 namespace BlackBox {
 
-  static void fifoIntCallback(int gpio, int level, unsigned int tick, void * obj) {
+  void FXAS21002C::fifoIntCallback(int gpio, int level, unsigned int tick, void * obj) {
     FXAS21002C * gyro_p = (FXAS21002C *) obj; 
 
-    obj->serviceFIFO(gpio, level, tick);
+    gyro_p->serviceFIFO(gpio, level, tick);
   }
 
-  static void dReadyIntCallback(int gpio, int level, unsigned int tick, void * obj) {
+  void FXAS21002C::dReadyIntCallback(int gpio, int level, unsigned int tick, void * obj) {
     FXAS21002C * gyro_p = (FXAS21002C *) obj; 
 
-    obj->serviceDReady(gpio, level, tick);
+    gyro_p->serviceDReady(gpio, level, tick);
   }
   
   FXAS21002C::FXAS21002C(unsigned char bus, unsigned char addr, 
 			 unsigned char int1_pin,
-			 Mode & mode) {
+			 Mode mode) {
     if(!initPIGPIO()) {
       throw std::runtime_error("Failed to initialize PIGPIO.");
     }
@@ -52,9 +52,9 @@ namespace BlackBox {
 
   unsigned char FXAS21002C::readByte(unsigned char reg) {
     int ret = i2cReadByteData(i2c_handle, reg); 
-    
+
     if(ret < 0) {
-      std::cerr << "Got i2cReadByteData error: " << stat << "\n";
+      std::cerr << "Got i2cReadByteData error: " << ret << "\n";
       throw std::runtime_error("FXAS21002C: Failed to read byte.\n");
     }
 
@@ -86,7 +86,7 @@ namespace BlackBox {
     // auto-increment to the next register and wrap back around
     // to X_MSB. 
     if(fifo_entries > 0) {
-      readBlock(OUT_X_MSB_RO, (char*) rate_block, fifo_bytes); 
+      readBlock(OUT_X_MSB_RO, fifo_bytes, (char*) rate_block); 
     }
     return fifo_entries; 
   }
@@ -98,7 +98,7 @@ namespace BlackBox {
     if(stat & DRS_ZYXDR) {
       // note the 6 -- this is the number of registers 
       // (bytes) required to hold a set of xyz rates.
-      readBlock(OUT_X_MSB_R0, 6, (char*) &rates);
+      readBlock(OUT_X_MSB_RO, 6, (char*) &rates);
     }
     
     return 1; 
@@ -110,7 +110,7 @@ namespace BlackBox {
     std::cerr << "Need to put device in standby mode\n";
     // put in standby.
     // since ACTIVE and READY are both 0, the unit will be in standby
-    writeByte(CTRL_REG1_RW, 0)
+    writeByte(CTRL_REG1_RW, 0);
     
     // setup the interrupts and CR 2. 
     unsigned char creg2 = 0;    
@@ -173,7 +173,7 @@ namespace BlackBox {
 	v.x = rate_block[i].x;
 	v.y = rate_block[i].y;
 	v.z = rate_block[i].z;
-	v.seq_no = seq_no++; 
+	v.seq_no = sequence_number++;
 	gyro_rates.push(v);
       }
     }
@@ -188,11 +188,25 @@ namespace BlackBox {
       v.x = rate_block[0].x;
       v.y = rate_block[0].y;
       v.z = rate_block[0].z;
-      v.seq_no = seq_no++; 
+      v.seq_no = sequence_number++; 
       if(gyro_rates.size() < GYRO_RATE_QUEUE_MAXLEN) {
 	gyro_rates.push(v);
       }
     }
   }
 
+  int FXAS21002C::getRates(int max_samples, Rates * samps) {
+    int rv = 0;
+    {
+      std::lock_guard<std::mutex> lck(gq_mutex);
+      if(!gyro_rates.empty()) {
+	for(int i = 0; i < gyro_rates.size(); i++) {
+	  samps[i] = gyro_rates.front();
+	  gyro_rates.pop();
+	  rv++;
+	}
+      }
+    }
+    return rv;
+  }
 }

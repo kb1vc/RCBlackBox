@@ -1,10 +1,15 @@
 #pragma once
 
+#include <mutex>
+#include <queue>
+
 namespace BlackBox {
 
   
   class FXAS21002C { 
   public:
+    enum Mode { FIFO, DR_INT, DR_POLL };    
+    
     /**
      *
      * @param bus which i2c bus is the gyro on?  (1)
@@ -13,8 +18,9 @@ namespace BlackBox {
      * @param int2_pin second of two int pins from the chip
      */
     FXAS21002C(unsigned char bus, unsigned char addr,
-	       unsigned char int1_pin, unsigned char int2_pin);
-
+	       unsigned char int1_pin, 
+	       Mode mode);
+    
     ~FXAS21002C();
 
 
@@ -34,23 +40,6 @@ namespace BlackBox {
     
   protected:
 
-    void writeByte(unsigned char reg, unsigned char dat);
-    unsigned char readByte(unsigned char reg);
-
-    void readBlock(unsigned char reg, int len, char * buf);
-
-    int readFIFO();
-    
-    void FXAS21002C::start(CR1_DATA_RATE data_rate);
-    
-    int readDR(IRates & rates);
-
-    enum Mode { FIFO, DR_INT, DR_POLL };
-  
-    void init(Mode mode);
-
-    void serviceFIFO(int gpio, int level, unsigned int tick);
-    void serviceDReady(int gpio, int level, unsigned int tick);
     
 #pragma pack(push, 1)
     // want this in a contiguous 6 byte block.
@@ -163,16 +152,6 @@ namespace BlackBox {
     static const unsigned char CTRL_REG1_RW = 0x13;
     static const unsigned char CR1_RESET = 0x40;
     static const unsigned char CR1_SELF_TEST = 0x20;
-    enum CR1_DATA_RATE {
-			CR1_DATA_RATE_800 = 0x0,
-			CR1_DATA_RATE_400 = 0x1,
-			CR1_DATA_RATE_200 = 0x2,
-			CR1_DATA_RATE_100 = 0x3,
-			CR1_DATA_RATE_50 = 0x4,
-			CR1_DATA_RATE_25 = 0x5,
-			CR1_DATA_RATE_12r5 = 0x6,
-			CR1_DATA_RATE_XXX = 0x7 
-    };
 
     static const unsigned char CR1_ACTIVE = 0x2;
     static const unsigned char CR1_READY = 0x1;
@@ -197,9 +176,43 @@ namespace BlackBox {
     static const unsigned char CR3_WRAPTOONE = 0x8;
     static const unsigned char CR3_EXTCTRLEN = 0x4;
     static const unsigned char CR3_FS_DOUBLE = 0x1;
+
+    void writeByte(unsigned char reg, unsigned char dat);
+    unsigned char readByte(unsigned char reg);
+
+    void readBlock(unsigned char reg, int len, char * buf);
+
+    int readFIFO();
+
+    int readDR(IRates & rates);
+
+
+    void init(Mode mode, unsigned char int1_pin);
+
+    void serviceFIFO(int gpio, int level, unsigned int tick);
+    void serviceDReady(int gpio, int level, unsigned int tick);
     
 
+  public:
+
+    enum CR1_DATA_RATE {
+			CR1_DATA_RATE_800 = 0x0,
+			CR1_DATA_RATE_400 = 0x1,
+			CR1_DATA_RATE_200 = 0x2,
+			CR1_DATA_RATE_100 = 0x3,
+			CR1_DATA_RATE_50 = 0x4,
+			CR1_DATA_RATE_25 = 0x5,
+			CR1_DATA_RATE_12r5 = 0x6,
+			CR1_DATA_RATE_XXX = 0x7 
+    };
+    
+    void start(CR1_DATA_RATE data_rate);
+
   protected:
+    static void fifoIntCallback(int gpio, int level, unsigned int tick, void * obj);
+
+    static void dReadyIntCallback(int gpio, int level, unsigned int tick, void * obj);
+    
     int i2c_handle; 
   };
 
