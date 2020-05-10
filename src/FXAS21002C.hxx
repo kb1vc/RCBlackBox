@@ -16,8 +16,8 @@ namespace BlackBox {
 	       unsigned char int1_pin, unsigned char int2_pin);
 
 #pragma pack(push, 1)    
-    // this struct is purposely padded to 8 bytes
-    // to allow cleaner, cheaper copy operations
+    // This version of the Rate struct contains a sequence
+    // number as well as the gyro rates.
     struct Rates {
       // Note that the rates are "big endian" with the MSB in byte 0.
       // Better to leave this to the consumer of the data than spend
@@ -33,6 +33,8 @@ namespace BlackBox {
 
 #pragma pack(push, 1)
     // want this in a contiguous 6 byte block.
+    // This is the structure that mimics the layout of the
+    // registers. 
     struct IRates {
       unsigned short x, y, z;
     }; 
