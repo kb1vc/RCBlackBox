@@ -7,6 +7,15 @@
 
 namespace BlackBox {
 
+  void dumpBuf(char * buf, int len) {
+    for(int i = 0; i < len; i++) {
+      std::cerr.width(2);
+      std::cerr << std::hex << (((unsigned int) buf[i]) & 0x0ff) << " ";
+    }
+    std::cerr << "\n";
+  }
+
+
   void FXAS21002C::fifoIntCallback(int gpio, int level, unsigned int tick, void * obj) {
     FXAS21002C * gyro_p = (FXAS21002C *) obj; 
 
@@ -27,6 +36,7 @@ namespace BlackBox {
     }
     
     i2c_handle = i2cOpen(bus, addr, 0);
+    std::cerr << "I2C open returns handle = " << i2c_handle << "\n";
     if(i2c_handle < 0) {
       std::cerr << "Got i2cOpen error: " << i2c_handle << "\n";
       throw std::runtime_error("FXAS21002C: Failed to open i2c device .\n");
@@ -42,6 +52,9 @@ namespace BlackBox {
   }
 
   void FXAS21002C::writeByte(unsigned char reg, unsigned char dat) {
+    std::cerr << "Writing i2c byte  handle = " << i2c_handle 
+	      << "reg = " << std::hex
+	      << ((unsigned int) reg) << " " << ((unsigned int) dat) << std::dec << "\n";
     int stat = i2cWriteByteData(i2c_handle, reg, dat); 
     
     if(stat != 0) {
@@ -62,11 +75,37 @@ namespace BlackBox {
   }
 
   void FXAS21002C::readBlock(unsigned char reg, int len, char * buf) {
-    int stat = i2cReadDevice(i2c_handle, buf, len); 
+#if 0
+    char block_read[] =  { 0x4, 0x21, 0x7, 1, 0, 0 };
+    block_read[4] = reg;
+    int stat = i2cZip(i2c_handle, block_read, 6, NULL, 0);
     if(stat < 0) {
-      std::cerr << "Got i2cReadDevice error: " << stat << "\n";
+      std::cerr << "Got i2cZip error: " << stat << "\n";
       throw std::runtime_error("FXAS21002C: Failed to read block.\n");
     }
+      if(stat < 0) {
+	std::cerr << "Got i2cReadDevice error: " << stat 
+		  << " reg = " << reg
+		  << " len = " << len
+		  << "\n";
+	throw std::runtime_error("FXAS21002C: Failed to read block.\n");
+      }
+    }
+    dumpBuf(buf, len);
+#else
+    int l = len;
+    char * bp = buf;
+    while(l) {
+      int tl = (l > 30) ? 30 : l;
+      l = l - tl;
+      int stat = i2cReadI2CBlockData(i2c_handle, reg, bp, tl); 
+      if(stat < 0) {
+	std::cerr << "Got i2cReadI2CBlockData error: " << stat << "\n";
+	throw std::runtime_error("FXAS21002C: Failed to read block.\n");
+      }
+      bp += tl;      
+    }
+#endif
   }
 
   void FXAS21002C::start(CR1_DATA_RATE data_rate) {
@@ -84,7 +123,7 @@ namespace BlackBox {
     // now read as many entries as are apparently in the FIFO
     // we're using the fact that reads from the XYZ registers 
     // auto-increment to the next register and wrap back around
-    // to X_MSB. 
+    // to X_MSB.
     if(fifo_entries > 0) {
       readBlock(OUT_X_MSB_RO, fifo_bytes, (char*) rate_block); 
     }
@@ -120,7 +159,7 @@ namespace BlackBox {
       // will get an interrupt on pin 1.
       writeByte(F_SETUP_RW, FS_MODE_STOP | (FS_WMRK_M & 16));
       // LPF at 8 Hz, limit range to about 3 RPM
-      writeByte(CTRL_REG0_RW, CR0_LPF_H | CR0_RANGE_1000);
+      writeByte(CTRL_REG0_RW, CR0_LPF_L | CR0_HPF_3 | CR0_HPF_EN | CR0_RANGE_1000);
       
       // FIFO interrupt on int1 pin
       // active high, totem pole output.

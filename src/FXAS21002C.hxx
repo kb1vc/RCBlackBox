@@ -5,6 +5,14 @@
 
 namespace BlackBox {
 
+#pragma pack(push, 1)    
+  // This version of the Rate struct contains a sequence
+  // number as well as the gyro rates.
+  struct Rates {
+    short x, y, z; 
+    unsigned short seq_no; 
+  };
+#pragma pack(pop)    
   
   class FXAS21002C { 
   public:
@@ -24,17 +32,6 @@ namespace BlackBox {
     ~FXAS21002C();
 
 
-#pragma pack(push, 1)    
-    // This version of the Rate struct contains a sequence
-    // number as well as the gyro rates.
-    struct Rates {
-      // Note that the rates are "big endian" with the MSB in byte 0.
-      // Better to leave this to the consumer of the data than spend
-      // time on it in the recorder. 
-      unsigned short x, y, z; 
-      unsigned short seq_no; 
-    };
-#pragma pack(pop)    
 
     int getRates(int max_samples, Rates * samps);
     
