@@ -9,6 +9,16 @@ short swapEnds(unsigned short v)  {
 
   return ret; 
 }
+
+int divit(int a, int b) {
+  // get nearest good divide
+  int ret = a / b;
+  if((a % b) > (b/2)) ret++;
+
+  return ret;
+}
+
+
 int main() {
   // create a connection. We're going to use
   // GPIO 4 and 17 for the interrupts. (4 for the FIFO interrupt.)
@@ -17,19 +27,52 @@ int main() {
 
   gyro.start(BlackBox::FXAS21002C::CR1_DATA_RATE_25);
 
+
   BlackBox::Rates rates[256];
 
   int xa, ya, za;
   xa = ya = za = 0;
-  for(int i = 0; i < 10000; ) {
+  
+  int xcorr, ycorr, zcorr;
+  xcorr = ycorr = zcorr;
+  // ignore the first second or so as the device settles.
+  int i; 
+  for(i = 0; i < 1000; ) {
+    int numrates = gyro.getRates(256, rates);
+    i += numrates;
+  }
+  // Measure the drift rate as the device is still
+  for(i = 0; i < 1000; ) {
+    int numrates = gyro.getRates(256, rates);
+    i += numrates;
+    for(int j = 0; j < numrates; j++) {
+      int x, y, z;
+      x = swapEnds(rates[j].x);
+      y = swapEnds(rates[j].y);
+      z = swapEnds(rates[j].z);
+      xcorr += x;
+      ycorr += y;
+      zcorr += z; 
+    }
+  }
+  
+  
+  std::cerr << "### Corrections: " << i << " " << xcorr << " " << ycorr << " " << zcorr << "\n";
+  for(int i = 0; i < 2000; ) {
     int numrates = gyro.getRates(256, rates);
     for(int j = 0; j < numrates; j++) {
-      std::cerr << std::dec << i++ << " "
+      int x, y, z;
+      x = swapEnds(rates[j].x);
+      y = swapEnds(rates[j].y);
+      z = swapEnds(rates[j].z);
+      xa += x;
+      ya += y;
+      za += z;
+      std::cout << std::dec << i++ << " "
 		<< numrates << " "
 		<< rates[j].seq_no << " "
-		<< swapEnds(rates[j].x) << " " 
-		<< swapEnds(rates[j].y) << " "
-		<< swapEnds(rates[j].z) << "\n";
+		<< x << " " << y << " " << z << " "
+		<< xa << " " << ya << " " << za << "\n";
     }
     usleep(10000);
   }

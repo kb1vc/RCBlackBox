@@ -194,13 +194,13 @@ namespace BlackBox {
 
     enum CR1_DATA_RATE {
 			CR1_DATA_RATE_800 = 0x0,
-			CR1_DATA_RATE_400 = 0x1,
-			CR1_DATA_RATE_200 = 0x2,
-			CR1_DATA_RATE_100 = 0x3,
-			CR1_DATA_RATE_50 = 0x4,
-			CR1_DATA_RATE_25 = 0x5,
-			CR1_DATA_RATE_12r5 = 0x6,
-			CR1_DATA_RATE_XXX = 0x7 
+			CR1_DATA_RATE_400 = 0x4,
+			CR1_DATA_RATE_200 = 0x8,
+			CR1_DATA_RATE_100 = 0xc,
+			CR1_DATA_RATE_50 = 0x10,
+			CR1_DATA_RATE_25 = 0x14,
+			CR1_DATA_RATE_12r5 = 0x18,
+			CR1_DATA_RATE_XXX = 0x1c
     };
     
     void start(CR1_DATA_RATE data_rate);

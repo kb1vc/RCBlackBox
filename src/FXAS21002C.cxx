@@ -158,8 +158,8 @@ namespace BlackBox {
       // and set the watermark at 16 -- once we have this many samples, we
       // will get an interrupt on pin 1.
       writeByte(F_SETUP_RW, FS_MODE_STOP | (FS_WMRK_M & 16));
-      // LPF at 8 Hz, limit range to about 3 RPM
-      writeByte(CTRL_REG0_RW, CR0_LPF_L | CR0_HPF_3 | CR0_HPF_EN | CR0_RANGE_1000);
+      // LPF at 8 Hz, limit range to about 3 RPS
+      writeByte(CTRL_REG0_RW, CR0_LPF_M | CR0_HPF_3 | CR0_HPF_EN | CR0_RANGE_1000);
       
       // FIFO interrupt on int1 pin
       // active high, totem pole output.
