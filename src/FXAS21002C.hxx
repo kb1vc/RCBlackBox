@@ -2,6 +2,7 @@
 
 #include <mutex>
 #include <queue>
+#include "FXBase.hxx"
 
 namespace BlackBox {
 
@@ -14,7 +15,7 @@ namespace BlackBox {
   };
 #pragma pack(pop)    
   
-  class FXAS21002C { 
+  class FXAS21002C : public FXBase { 
   public:
     enum Mode { FIFO, DR_INT, DR_POLL };    
     

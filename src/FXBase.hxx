@@ -3,7 +3,8 @@
 namespace BlackBox {
   class FXBase {
   public:
-    FXBase::FXBase(unsigned char bus, unsigned char base);
+    FXBase(unsigned char bus, unsigned char addr);
+    
     void writeByte(unsigned char reg, unsigned char dat);
 
     unsigned char readByte(unsigned char reg);

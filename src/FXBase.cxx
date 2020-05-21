@@ -3,9 +3,10 @@
 #include "PI_IO.hxx"
 #include <iostream>
 #include <mutex>
+#include "FXBase.hxx"
 
 namespace BlackBox {
-  FXBase::FXBase(unsigned char bus, unsigned char base) {
+  FXBase::FXBase(unsigned char bus, unsigned char addr) {
     if(!initPIGPIO()) {
       throw std::runtime_error("Failed to initialize PIGPIO.");
     }
