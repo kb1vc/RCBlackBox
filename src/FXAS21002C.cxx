@@ -30,17 +30,7 @@ namespace BlackBox {
   
   FXAS21002C::FXAS21002C(unsigned char bus, unsigned char addr, 
 			 unsigned char int1_pin,
-			 Mode mode) {
-    if(!initPIGPIO()) {
-      throw std::runtime_error("Failed to initialize PIGPIO.");
-    }
-    
-    i2c_handle = i2cOpen(bus, addr, 0);
-    std::cerr << "I2C open returns handle = " << i2c_handle << "\n";
-    if(i2c_handle < 0) {
-      std::cerr << "Got i2cOpen error: " << i2c_handle << "\n";
-      throw std::runtime_error("FXAS21002C: Failed to open i2c device .\n");
-    }
+			 Mode mode) : FXBase(bus, addr) {
 
     sequence_number = 0;
     
@@ -75,24 +65,6 @@ namespace BlackBox {
   }
 
   void FXAS21002C::readBlock(unsigned char reg, int len, char * buf) {
-#if 0
-    char block_read[] =  { 0x4, 0x21, 0x7, 1, 0, 0 };
-    block_read[4] = reg;
-    int stat = i2cZip(i2c_handle, block_read, 6, NULL, 0);
-    if(stat < 0) {
-      std::cerr << "Got i2cZip error: " << stat << "\n";
-      throw std::runtime_error("FXAS21002C: Failed to read block.\n");
-    }
-      if(stat < 0) {
-	std::cerr << "Got i2cReadDevice error: " << stat 
-		  << " reg = " << reg
-		  << " len = " << len
-		  << "\n";
-	throw std::runtime_error("FXAS21002C: Failed to read block.\n");
-      }
-    }
-    dumpBuf(buf, len);
-#else
     int l = len;
     char * bp = buf;
     while(l) {
@@ -105,7 +77,6 @@ namespace BlackBox {
       }
       bp += tl;      
     }
-#endif
   }
 
   void FXAS21002C::start(CR1_DATA_RATE data_rate) {

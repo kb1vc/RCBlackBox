@@ -6,7 +6,7 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/../cmake/Modules
 
 find_package(pigpio REQUIRED)
 
-add_library(gyro FXAS21002C.cxx PI_IO.cxx)
+add_library(gyro FXAS21002C.cxx FXBase.cxx PI_IO.cxx)
 
 target_include_directories(gyro PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 #target_link_libraries(gyro LINK_PUBLIC ${pigpio_LIBRARY})
