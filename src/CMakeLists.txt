@@ -6,12 +6,18 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/../cmake/Modules
 
 find_package(pigpio REQUIRED)
 
-add_library(gyro FXAS21002C.cxx FXBase.cxx PI_IO.cxx)
+add_library(gyro FXAS21002C.cxx FXBase.cxx FXOS8700CQ.cxx PI_IO.cxx)
 
 target_include_directories(gyro PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 #target_link_libraries(gyro LINK_PUBLIC ${pigpio_LIBRARY})
 
-add_executable(FT FXAS_Test.cxx)
+add_executable(FG FXAS_Test.cxx)
 
-target_include_directories(FT PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${pigpio_INCLUDE_DIRS})
-target_link_libraries(FT LINK_PUBLIC gyro ${pigpio_LIBRARY})
+
+target_include_directories(FG PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${pigpio_INCLUDE_DIRS})
+target_link_libraries(FG LINK_PUBLIC gyro ${pigpio_LIBRARY})
+
+add_executable(FC FXOS_Test.cxx)
+
+target_include_directories(FC PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${pigpio_INCLUDE_DIRS})
+target_link_libraries(FC LINK_PUBLIC gyro ${pigpio_LIBRARY})

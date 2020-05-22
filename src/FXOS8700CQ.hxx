@@ -2,9 +2,17 @@
 
 #include <mutex>
 #include <queue>
+#include "FXBase.hxx"
 
 namespace BlackBox {
 
+  // this is the byte-order corrected signed
+  // measured data, magnetometer, and accelerometer
+  struct MXData {
+    short mx, my, mz, ax, ay, az;
+    int seq_no;
+  };
+  
   class FXOS8700CQ : public FXBase { 
   public:
     enum Mode { DR_INT, DR_POLL };    
@@ -22,13 +30,7 @@ namespace BlackBox {
     
     ~FXOS8700CQ();
 
-
-    // this is the byte-order corrected signed
-    // measured data, magnetometer, and accelerometer
-    struct MXData {
-      short mx, my, mz, ax, ay, az;
-      int seq_no;
-    }
+    int getMX(int max_samps, MXData * dat_p);
     
     
   protected:
@@ -106,7 +108,7 @@ namespace BlackBox {
 		  FIFO_STOP_ON_OVF = 0x80,
 		  FIFO_CIRC = 0x40,
 		  FIFO_DIS = 0x0
-    }
+    };
     static const unsigned char FS_WMRK_M = 0x3f;
     static const unsigned char FS_WMRK_S = 0;
 
@@ -174,7 +176,7 @@ namespace BlackBox {
     static const unsigned char PLT_THS_M = 0x1f;
     static const unsigned char PLT_THS_S = 3;
     static const unsigned char PLT_HYS_M = 0x7;
-    static const unsigned char PLT_HYS_S = 0
+    static const unsigned char PLT_HYS_S = 0;
 
     static const unsigned char A_FFMT_CFG_RW = 0x15;
     static const unsigned char AFC_FFMT_ELE = 0x80;
@@ -242,7 +244,7 @@ namespace BlackBox {
 			CR1_DATA_RATE_50 = 4,
 			CR1_DATA_RATE_12r5 = 5,
 			CR1_DATA_RATE_6r25 = 6,
-			CR1_DATA_RATE_1r5625 = 7;
+			CR1_DATA_RATE_1r5625 = 7
     };
 
 
@@ -411,29 +413,16 @@ namespace BlackBox {
 
     int readFIFO();
 
-    int readDR(IRates & rates);
+    int readDR(ISData & raw);
 
 
     void init(Mode mode, unsigned char int1_pin);
 
-    void serviceFIFO(int gpio, int level, unsigned int tick);
     void serviceDReady(int gpio, int level, unsigned int tick);
-    
 
   public:
 
-    enum CR1_DATA_RATE {
-			CR1_DATA_RATE_800 = 0x0,
-			CR1_DATA_RATE_400 = 0x4,
-			CR1_DATA_RATE_200 = 0x8,
-			CR1_DATA_RATE_100 = 0xc,
-			CR1_DATA_RATE_50 = 0x10,
-			CR1_DATA_RATE_25 = 0x14,
-			CR1_DATA_RATE_12r5 = 0x18,
-			CR1_DATA_RATE_XXX = 0x1c
-    };
-    
-    void start(CR1_DATA_RATE data_rate);
+    void start();
 
   protected:
     static void fifoIntCallback(int gpio, int level, unsigned int tick, void * obj);

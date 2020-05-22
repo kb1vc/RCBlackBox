@@ -1,4 +1,6 @@
-#include "FXOS8700CW.hxx"
+#include "FXOS8700CQ.hxx"
+#include <pigpio.h>
+#include "PI_IO.hxx"
 
 namespace BlackBox {
   FXOS8700CQ::FXOS8700CQ(unsigned char bus, unsigned char addr,
@@ -9,13 +11,18 @@ namespace BlackBox {
     init(mode, int1_pin);
   }
 
+  FXOS8700CQ::~FXOS8700CQ() { 
+    i2cClose(i2c_handle);
+  }
+
+
   void FXOS8700CQ::dReadyIntCallback(int gpio, int level, unsigned int tick, void * obj) {
     FXOS8700CQ * accmag_p = (FXOS8700CQ *) obj; 
 
     accmag_p->serviceDReady(gpio, level, tick);
   }
 
-  int FXAS21002C::readDR(ISData & raw) {
+  int FXOS8700CQ::readDR(ISData & raw) {
     // return 0 if we got nothing
     // first read the STATUS register. 
     unsigned char stat = readByte(M_DR_STATUS_RO);
@@ -32,7 +39,7 @@ namespace BlackBox {
   void FXOS8700CQ::serviceDReady(int gpio, int level, unsigned int tick) {
     // read the rates and store them in the outbound queue.
     ISData raw; 
-    if(readDR(&raw)) {
+    if(readDR(raw)) {
       // lock the queue
       std::lock_guard<std::mutex> lck(gq_mutex);
       MXData v;
@@ -45,7 +52,7 @@ namespace BlackBox {
   }
   
 
-  FXOS8700CQ::init(Mode mode, unsigned char int1_pin) {
+  void FXOS8700CQ::init(Mode mode, unsigned char int1_pin) {
     // put the device to sleep
     writeByte(CTRL_REG1_RW, 0);
 
@@ -66,7 +73,17 @@ namespace BlackBox {
       writeByte(CTRL_REG4_RW, CR4_INT_EN_DRDY);
       gpioSetISRFuncEx(int1_pin, RISING_EDGE, 0, dReadyIntCallback, this);
     }
-    
+  }
+  
+  int FXOS8700CQ::getMX(int max_samps, MXData * dat_p) {
+    int i; 
+    for(i = 0; i < max_samps; i++) {
+      if(mx_queue.empty()) return i;
+      dat_p[i] = mx_queue.front(); mx_queue.pop();
+    }
+    return max_samps;
+  }
+  void FXOS8700CQ::start() {
     // turn on the accelerometer
     writeByte(CTRL_REG1_RW, (CR1_DATA_RATE_6r25 << CR1_DR_S) | CR1_LNOISE | CR1_ACTIVE);
   }
