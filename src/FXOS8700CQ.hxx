@@ -5,18 +5,9 @@
 
 namespace BlackBox {
 
-#pragma pack(push, 1)    
-  // This version of the Rate struct contains a sequence
-  // number as well as the gyro rates.
-  struct Rates {
-    short x, y, z; 
-    unsigned short seq_no; 
-  };
-#pragma pack(pop)    
-  
   class FXOS8700CQ : public FXBase { 
   public:
-    enum Mode { FIFO, DR_INT, DR_POLL };    
+    enum Mode { DR_INT, DR_POLL };    
     
     /**
      *
@@ -36,12 +27,13 @@ namespace BlackBox {
     // measured data, magnetometer, and accelerometer
     struct MXData {
       short mx, my, mz, ax, ay, az;
+      int seq_no;
     }
     
     
   protected:
 #pragma pack(push, 1)
-    // want this in a contiguous 6 byte block.
+    // want this in a contiguous 12 byte block.
     // This is the structure that mimics the layout of the
     // registers starting with M_OUT_X_MSB down to CMP_Z_LSB
     // This allows us to read simultaneous accellerometer and
@@ -77,10 +69,9 @@ namespace BlackBox {
       return ((short) ret);
     }
     
-    std::queue<Rates> gyro_rates;
-    IRates rate_block[256];
+    std::queue<MXData> mx_queue;
     unsigned short sequence_number;
-    static const int GYRO_RATE_QUEUE_MAXLEN = 1024;
+    static const int MX_QUEUE_MAXLEN = 1024;
     std::mutex gq_mutex;
 
     

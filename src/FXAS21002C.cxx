@@ -109,9 +109,11 @@ namespace BlackBox {
       // note the 6 -- this is the number of registers 
       // (bytes) required to hold a set of xyz rates.
       readBlock(OUT_X_MSB_RO, 6, (char*) &rates);
+      return 1;
     }
-    
-    return 1; 
+    else {
+      return 0;
+    }
   }
   
   void FXAS21002C::init(Mode mode, unsigned char int1_pin) {
