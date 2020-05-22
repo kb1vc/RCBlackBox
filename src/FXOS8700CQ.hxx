@@ -9,7 +9,8 @@ namespace BlackBox {
   // this is the byte-order corrected signed
   // measured data, magnetometer, and accelerometer
   struct MXData {
-    short mx, my, mz, ax, ay, az;
+    short ax, ay, az;    
+    short mx, my, mz;
     int seq_no;
   };
   
@@ -41,7 +42,8 @@ namespace BlackBox {
     // This allows us to read simultaneous accellerometer and
     // magnetometer values. 
     struct ISData {
-      unsigned short mx, my, mz, ax, ay, az;
+      unsigned short ax, ay, az;      
+      unsigned short mx, my, mz;
     };
 #pragma pack(pop)
 
@@ -57,8 +59,8 @@ namespace BlackBox {
     short accSwap(unsigned short in) {
       // acceleration values are 14 bits, but MSB first.  Swap the bytes
       unsigned short ret;
-      ret = ((in & 0x3f) << 8) | (in >> 8);
-      if(in & 0x20) {
+      ret = ((in & 0xfc) << 6) | (in >> 8);
+      if(in & 0x80) {
 	ret |= 0xc000; // sign extend. 
       }
       return ((short) ret);
@@ -415,13 +417,13 @@ namespace BlackBox {
 
     int readDR(ISData & raw);
 
-
     void init(Mode mode, unsigned char int1_pin);
 
     void serviceDReady(int gpio, int level, unsigned int tick);
 
   public:
 
+    int readDR(MXData & dat);    
     void start();
 
   protected:

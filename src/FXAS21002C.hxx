@@ -210,8 +210,5 @@ namespace BlackBox {
     static void fifoIntCallback(int gpio, int level, unsigned int tick, void * obj);
 
     static void dReadyIntCallback(int gpio, int level, unsigned int tick, void * obj);
-    
-    int i2c_handle; 
   };
-
 }

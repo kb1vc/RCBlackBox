@@ -1,6 +1,7 @@
 #include "FXOS8700CQ.hxx"
 #include <pigpio.h>
 #include "PI_IO.hxx"
+#include <iostream>
 
 namespace BlackBox {
   FXOS8700CQ::FXOS8700CQ(unsigned char bus, unsigned char addr,
@@ -18,17 +19,33 @@ namespace BlackBox {
 
   void FXOS8700CQ::dReadyIntCallback(int gpio, int level, unsigned int tick, void * obj) {
     FXOS8700CQ * accmag_p = (FXOS8700CQ *) obj; 
-
     accmag_p->serviceDReady(gpio, level, tick);
   }
 
+  int FXOS8700CQ::readDR(MXData & mx) {
+    ISData raw;
+    if(readDR(raw)) {
+      IS2MXData(mx, raw);
+      mx.seq_no = sequence_number ++; 
+      return 1; 
+    }
+    else return 0;
+  }
   int FXOS8700CQ::readDR(ISData & raw) {
     // return 0 if we got nothing
     // first read the STATUS register. 
     unsigned char stat = readByte(M_DR_STATUS_RO);
     if(stat & DRS_ZYXDR) {
       // read the combined mag and acc registers, starting with M_OUT_X_MSB
-      readBlock(M_OUT_X_MSB_RO, sizeof(ISData), (char*) &raw);
+      //      readBlock(M_OUT_X_MSB_RO, sizeof(ISData), (char*) &raw);
+      readBlock(OUT_X_MSB_RO, sizeof(ISData), (char*) &raw);      
+      std::cerr << "# " << std::hex
+		<< raw.mx << " "
+		<< raw.my << " "
+		<< raw.mz << " "	
+		<< raw.ax << " "
+		<< raw.ay << " "
+		<< raw.az << "\n";
       return 1; 
     }
     else {
@@ -71,6 +88,7 @@ namespace BlackBox {
     if(mode == DR_INT) {
       // interrupt from data ready... 
       writeByte(CTRL_REG4_RW, CR4_INT_EN_DRDY);
+      writeByte(CTRL_REG5_RW, CR5_INT_CFG_DRDY); // send int to INT1.
       gpioSetISRFuncEx(int1_pin, RISING_EDGE, 0, dReadyIntCallback, this);
     }
   }
