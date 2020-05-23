@@ -39,13 +39,6 @@ namespace BlackBox {
       // read the combined mag and acc registers, starting with M_OUT_X_MSB
       //      readBlock(M_OUT_X_MSB_RO, sizeof(ISData), (char*) &raw);
       readBlock(OUT_X_MSB_RO, sizeof(ISData), (char*) &raw);      
-      std::cerr << "# " << std::hex
-		<< raw.mx << " "
-		<< raw.my << " "
-		<< raw.mz << " "	
-		<< raw.ax << " "
-		<< raw.ay << " "
-		<< raw.az << "\n";
       return 1; 
     }
     else {
@@ -75,7 +68,7 @@ namespace BlackBox {
 
     // enable the accel and mag in hybrid mode
     // sample at 6.25 Hz
-    writeByte(M_CTRL_REG1_RW, MCR1_HMS::BOTH | ((0x7 & MCR1_OSR_M) << MCR1_OSR_S));
+    writeByte(M_CTRL_REG1_RW, MCR1_ACAL_ENA |  MCR1_HMS::BOTH | ((0x7 & MCR1_OSR_M) << MCR1_OSR_S));
 
     // couple the mag and acc registers in a block,
     // all others are default

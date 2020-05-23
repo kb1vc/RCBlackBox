@@ -12,16 +12,12 @@ namespace BlackBox {
     }
     
     i2c_handle = i2cOpen(bus, addr, 0);
-    std::cerr << "I2C open returns handle = " << i2c_handle << "\n";
     if(i2c_handle < 0) {
       std::cerr << "Got i2cOpen error: " << i2c_handle << "\n";
       throw std::runtime_error("FXAS21002C: Failed to open i2c device .\n");
     }
   }
   void FXBase::writeByte(unsigned char reg, unsigned char dat) {
-    std::cerr << "Writing i2c byte  handle = " << i2c_handle 
-	      << "reg = " << std::hex
-	      << ((unsigned int) reg) << " " << ((unsigned int) dat) << std::dec << "\n";
     int stat = i2cWriteByteData(i2c_handle, reg, dat); 
     
     if(stat != 0) {

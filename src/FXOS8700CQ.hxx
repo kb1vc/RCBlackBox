@@ -58,12 +58,11 @@ namespace BlackBox {
 
     short accSwap(unsigned short in) {
       // acceleration values are 14 bits, but MSB first.  Swap the bytes
-      unsigned short ret;
-      ret = ((in & 0xfc) << 6) | (in >> 8);
-      if(in & 0x80) {
+      unsigned short ret = magSwap(in) >> 2;
+      if(ret & 0x2000) {
 	ret |= 0xc000; // sign extend. 
       }
-      return ((short) ret);
+      return ret;
     }
     
     short magSwap(unsigned short in) {

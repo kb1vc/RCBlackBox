@@ -1,18 +1,19 @@
 #include "FXOS8700CQ.hxx"
 #include <iostream>
 #include <unistd.h>
-
+#include <boost/format.hpp>
 void doPoll(BlackBox::FXOS8700CQ & comp) {
   BlackBox::MXData dat;
 
   for(int i = 0; i < 2000; ) {
     int nummx = comp.readDR(dat);
     if(nummx) {
-      std::cout << std::dec << i++ << " "
-		<< nummx << " "
-		<< dat.seq_no << " " << std::hex
-		<< dat.mx << " " << dat.my << " " << dat.mz << " "
-		<< dat.ax << " " << dat.ay << " " << dat.az << "\n";
+      std::cout << boost::format("%4d: %2d %4d M: [%04x %04x %04x] A: [%04x %04x %04x]   M: [%4d %4d %4d] A: [%4d %4d %4d]\n")
+	% i++ % nummx % dat.seq_no 
+	% dat.mx % dat.my % dat.mz
+	% dat.ax % dat.ay % dat.az	
+	% dat.mx % dat.my % dat.mz
+	% dat.ax % dat.ay % dat.az;
     }
     usleep(10000);
   }
