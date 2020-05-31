@@ -27,3 +27,5 @@ add_executable(SW SW_Test.cxx)
 
 target_include_directories(SW PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${pigpio_INCLUDE_DIRS})
 target_link_libraries(SW LINK_PUBLIC gyro ${pigpio_LIBRARY})
+
+add_executable(Shutdown_Test Shutdown_Test.cxx)

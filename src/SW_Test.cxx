@@ -4,14 +4,17 @@
 
 int main() {
   BlackBox::initPIGPIO();
+  
+  const int sw_pin = 14;
+  const int led_pin = 15;
+  gpioSetMode(sw_pin, PI_INPUT);
+  gpioSetPullUpDown(sw_pin, PI_PUD_UP);
+  gpioSetMode(led_pin, PI_OUTPUT);
 
-  gpioSetMode(23, PI_INPUT);
-  gpioSetPullUpDown(23, PI_PUD_UP);
+  int counter[16];
+  int cidx = 0;
 
-  int i = 0;
-  std::cerr << "First read of 23\n";
-  while(!gpioRead(23)) { i++; }
-
-  std::cerr << "Pin 23 was low for " << i << " iterations.  It is now high\n";
-
+  while(1) {
+    gpioWrite(led_pin, !gpioRead(sw_pin));
+  }
 }
