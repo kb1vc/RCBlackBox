@@ -3,13 +3,13 @@
 
 namespace BlackBox {
 
-  class PIIORaw : public PIIO {
+  class PIIOD : public PIIO {
   public:
-    PIIORaw() : PIIO() {
+    PIIOD() : PIIO() {
       initPIGPIO();
     }
 
-    ~PIIORaw() {
+    ~PIIOD() {
       closeI2C();
       closePIGPIO();
     }
@@ -53,8 +53,19 @@ namespace BlackBox {
 
     int i2c_handle; 
     
-  protected:
-    static bool pigpio_has_been_initialized; 
+    int pigpio_server;
+
+    class PinCallbackRec {
+    public:
+      PinCallbackRec(PinCallback cb, void * userptr) : cb(cb), userptr(userptr) { }
+      PinCallback cb;
+      void * userptr;
+    };
+
+    int setupCallback(unsigned int pin, unsigned int edge, PinCallbackRec * cbr);
+    static void handleCallback(int server, unsigned int gpio, 
+			       unsigned int level, unsigned int tick, void * userdata);
+    
   };
 }
 

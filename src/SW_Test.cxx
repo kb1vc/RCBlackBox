@@ -1,10 +1,12 @@
 #include <iostream>
 #include <pigpio.h>
 #include "PIIORaw.hxx"
+#include "PIIOD.hxx"
 #include "Switch.hxx"
 
 int main() {
-  BlackBox::PIIORaw piio; 
+  //  BlackBox::PIIORaw piio;
+  BlackBox::PIIOD piio;   
 
   const int sw_pin = 14;  
   BlackBox::Switch sw(&piio, sw_pin, 50000);

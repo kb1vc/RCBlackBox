@@ -1,15 +1,14 @@
-#include <pigpio.h>
 #include <iostream>
 #include <sys/time.h>
 #include <stdexcept>
 #include "PIIO.hxx"
 #include "Switch.hxx"
-
+#include <pigpio.h>
 
 namespace BlackBox {
 
   void Switch::setDebounceInterval(unsigned int us_delay) {
-    gpioGlitchFilter(pin_num, us_delay);
+    piio_p->setGlitchFilter(pin_num, us_delay);
   }
   
   // a simple debounced switch
@@ -17,12 +16,12 @@ namespace BlackBox {
 		 unsigned int pin_num, unsigned int us_delay) : piio_p(piio_p), pin_num(pin_num) {
     setDebounceInterval(us_delay);
 
-    gpioSetMode(pin_num, PI_INPUT);
-    gpioSetPullUpDown(pin_num, PI_PUD_UP);
+    piio_p->setMode(pin_num, PI_INPUT);
+    piio_p->setPullUpDown(pin_num, PI_PUD_UP);
     
     
     // setup the callback.
-    int stat = gpioSetAlertFuncEx(pin_num, dispatchCallBack, this);
+    int stat = piio_p->setPinCallBack(pin_num, dispatchCallBack, this);
   }
 
   void Switch::setHighCB(std::function<void(unsigned int, void*)> call_back, void * userptr) {
@@ -57,7 +56,7 @@ namespace BlackBox {
     return pin_state;
   }  
 
-  void Switch::dispatchCallBack(int gpio, int level, unsigned int tick, void * sp) {
+  void Switch::dispatchCallBack(int pin, int level, unsigned int tick, void * sp) {
     ((Switch *) sp)->switchEventCallBack(tick, level);
   }
 

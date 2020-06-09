@@ -1,19 +1,21 @@
 #include "FXOS8700CQ.hxx"
 #include <pigpio.h>
-#include "PI_IO.hxx"
+#include "PIIO.hxx"
 #include <iostream>
 
 namespace BlackBox {
-  FXOS8700CQ::FXOS8700CQ(unsigned char bus, unsigned char addr,
+  FXOS8700CQ::FXOS8700CQ(PIIO * piio_p, unsigned char bus, unsigned char addr,
 			 unsigned char int1_pin, 
-			 Mode mode) : FXBase(bus, addr) {
+			 Mode mode) : piio_p(piio_p) {
     sequence_number = 0;
 
+    piio_p->openI2C(bus, addr, 0);
+    
     init(mode, int1_pin);
   }
 
   FXOS8700CQ::~FXOS8700CQ() { 
-    i2cClose(i2c_handle);
+    piio_p->closeI2C();
   }
 
 
@@ -34,11 +36,11 @@ namespace BlackBox {
   int FXOS8700CQ::readDR(ISData & raw) {
     // return 0 if we got nothing
     // first read the STATUS register. 
-    unsigned char stat = readByte(M_DR_STATUS_RO);
+    unsigned char stat = piio_p->readRegI2C(M_DR_STATUS_RO);
     if(stat & DRS_ZYXDR) {
       // read the combined mag and acc registers, starting with M_OUT_X_MSB
       //      readBlock(M_OUT_X_MSB_RO, sizeof(ISData), (char*) &raw);
-      readBlock(OUT_X_MSB_RO, sizeof(ISData), (char*) &raw);      
+      piio_p->readBlockI2C(OUT_X_MSB_RO, sizeof(ISData), (char*) &raw);      
       return 1; 
     }
     else {
@@ -64,25 +66,25 @@ namespace BlackBox {
 
   void FXOS8700CQ::init(Mode mode, unsigned char int1_pin) {
     // put the device to sleep
-    writeByte(CTRL_REG1_RW, 0);
+    piio_p->writeRegByteI2C(CTRL_REG1_RW, 0);
 
     // enable the accel and mag in hybrid mode
     // sample at 6.25 Hz
-    writeByte(M_CTRL_REG1_RW, MCR1_ACAL_ENA |  MCR1_HMS::BOTH | ((0x7 & MCR1_OSR_M) << MCR1_OSR_S));
+    piio_p->writeRegByteI2C(M_CTRL_REG1_RW, MCR1_ACAL_ENA |  MCR1_HMS::BOTH | ((0x7 & MCR1_OSR_M) << MCR1_OSR_S));
 
     // couple the mag and acc registers in a block,
     // all others are default
-    writeByte(M_CTRL_REG2_RW, MCR2_HYB_AUTO_INC);
+    piio_p->writeRegByteI2C(M_CTRL_REG2_RW, MCR2_HYB_AUTO_INC);
 
     // set acc to 2G full scale, no HPF
-    writeByte(XYZ_DATA_CFG_RW, XYZDC_FS_2G);
+    piio_p->writeRegByteI2C(XYZ_DATA_CFG_RW, XYZDC_FS_2G);
 
 
     if(mode == DR_INT) {
       // interrupt from data ready... 
-      writeByte(CTRL_REG4_RW, CR4_INT_EN_DRDY);
-      writeByte(CTRL_REG5_RW, CR5_INT_CFG_DRDY); // send int to INT1.
-      gpioSetISRFuncEx(int1_pin, RISING_EDGE, 0, dReadyIntCallback, this);
+      piio_p->writeRegByteI2C(CTRL_REG4_RW, CR4_INT_EN_DRDY);
+      piio_p->writeRegByteI2C(CTRL_REG5_RW, CR5_INT_CFG_DRDY); // send int to INT1.
+      piio_p->setISRCallBack(int1_pin, RISING_EDGE, 0, dReadyIntCallback, this);
     }
   }
   
@@ -96,6 +98,6 @@ namespace BlackBox {
   }
   void FXOS8700CQ::start() {
     // turn on the accelerometer
-    writeByte(CTRL_REG1_RW, (CR1_DATA_RATE_6r25 << CR1_DR_S) | CR1_LNOISE | CR1_ACTIVE);
+    piio_p->writeRegByteI2C(CTRL_REG1_RW, (CR1_DATA_RATE_6r25 << CR1_DR_S) | CR1_LNOISE | CR1_ACTIVE);
   }
 }

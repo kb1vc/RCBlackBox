@@ -1,8 +1,4 @@
 #pragma once
-#include <map>
-#include <functional>
-#include <list>
-
 
 namespace BlackBox {
   typedef void(*PinCallback)(int, int, unsigned int, void*);

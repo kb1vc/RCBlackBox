@@ -2,6 +2,9 @@
 #include <iostream>
 #include <unistd.h>
 #include <boost/format.hpp>
+#include "PIIORaw.hxx"
+#include "PIIOD.hxx"
+
 void doPoll(BlackBox::FXOS8700CQ & comp) {
   BlackBox::MXData dat;
 
@@ -39,8 +42,8 @@ void doInt(BlackBox::FXOS8700CQ & comp) {
 int main() {
   // create a connection. We're going to use
   // GPIO 17 for the mag/acc interrupt
-
-  BlackBox::FXOS8700CQ comp(1, 0x1F, 17, BlackBox::FXOS8700CQ::DR_POLL);
+  BlackBox::PIIOD piio;
+  BlackBox::FXOS8700CQ comp(&piio, 1, 0x1F, 17, BlackBox::FXOS8700CQ::DR_POLL);
   //BlackBox::FXOS8700CQ comp(1, 0x1F, 17, BlackBox::FXOS8700CQ::DR_INT);  
 
   comp.start();

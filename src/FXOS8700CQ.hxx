@@ -2,7 +2,7 @@
 
 #include <mutex>
 #include <queue>
-#include "FXBase.hxx"
+#include "PIIO.hxx"
 
 namespace BlackBox {
 
@@ -14,7 +14,7 @@ namespace BlackBox {
     int seq_no;
   };
   
-  class FXOS8700CQ : public FXBase { 
+  class FXOS8700CQ {
   public:
     enum Mode { DR_INT, DR_POLL };    
     
@@ -25,7 +25,7 @@ namespace BlackBox {
      * @param int1_pin first of two int pins from the chip
      * @param int2_pin second of two int pins from the chip
      */
-    FXOS8700CQ(unsigned char bus, unsigned char addr,
+    FXOS8700CQ(PIIO * piio_p, unsigned char bus, unsigned char addr,
 	       unsigned char int1_pin, 
 	       Mode mode);
     
@@ -35,6 +35,9 @@ namespace BlackBox {
     
     
   protected:
+
+    PIIO * piio_p; // pointer to gpio interface. 
+    
 #pragma pack(push, 1)
     // want this in a contiguous 12 byte block.
     // This is the structure that mimics the layout of the
