@@ -18,41 +18,34 @@ namespace BlackBox {
   public:
     Switch(unsigned int pin_num, unsigned int us_delay = 10000); // 10mS debounce time
 
-    bool getState() const { return pin_state; }
+    bool getState() const;
 
-
-    void setDebounceInterval(unsigned int us_delay) { debounce_interval = us_delay; }
+    void setDebounceInterval(unsigned int us_delay);
     
-    void setHighCB(std::function<void(void*)> call_back, void * userptr = NULL);
-    void setLowCB(std::function<void(void*)> call_back, void * userptr = NULL);
-    void setTogleCB(std::function<void(void*)> call_back, void * userptr = NULL);
+    void setHighCB(std::function<void(unsigned int, void*)> call_back, void * userptr = NULL);
+    void setLowCB(std::function<void(unsigned int, void*)> call_back, void * userptr = NULL);
+    void setTogleCB(std::function<void(unsigned int, void*)> call_back, void * userptr = NULL);
 
   protected:
-    bool readPin();
-    
     static void dispatchCallBack(int gpio, int level, unsigned int tick, void * sp);
 
-    void switchEventCallBack(int level);
+    void switchEventCallBack(unsigned int tick, int level);
     
     enum CBKey { HIGH, LOW, TOGGLE };
     struct CBEl {
-      CBEl(std::function<void(void*)> cb, void *up) : 
+      CBEl(std::function<void(unsigned int, void*)> cb, void *up) : 
 	call_back(cb), userptr(up) { }
-      std::function<void(void*)> call_back;
+      std::function<void(unsigned int, void*)> call_back;
       void * userptr; 
     };      
      
     std::map<CBKey, std::list<CBEl>> callback_map;
     
-    void setupCallBack(CBKey key, std::function<void(void*)> call_back, void * userptr);
+    void setupCallBack(CBKey key, std::function<void(unsigned int, void*)> call_back, void * userptr);
 
-    void runCallBacks();
+    void runCallBacks(unsigned int tick);
 
-    bool timeExpired(timeval & old);
-  
     unsigned int pin_num;
-    timeval last_transition;
-    unsigned long debounce_interval;
     bool pin_state;
     
     };
