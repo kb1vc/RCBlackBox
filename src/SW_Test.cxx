@@ -1,6 +1,7 @@
 #include <iostream>
 #include <pigpio.h>
 #include "PI_IO.hxx"
+#include "Switch.hxx"
 
 int main() {
   BlackBox::initPIGPIO();

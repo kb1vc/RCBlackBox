@@ -6,26 +6,34 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/../cmake/Modules
 
 find_package(pigpio REQUIRED)
 
-add_library(gyro FXAS21002C.cxx FXBase.cxx FXOS8700CQ.cxx PI_IO.cxx)
+set(PIFDR_LIB_SRCS
+  FXAS21002C.cxx 
+  FXBase.cxx 
+  FXOS8700CQ.cxx 
+  PI_IO.cxx 
+  Switch.cxx)  
 
-target_include_directories(gyro PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
-#target_link_libraries(gyro LINK_PUBLIC ${pigpio_LIBRARY})
+
+add_library(pifdr_lib ${PIFDR_LIB_SRCS})
+
+target_include_directories(pifdr_lib PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+#target_link_libraries(pifdr_lib LINK_PUBLIC ${pigpio_LIBRARY})
 
 add_executable(FG FXAS_Test.cxx)
 
 
 target_include_directories(FG PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${pigpio_INCLUDE_DIRS})
-target_link_libraries(FG LINK_PUBLIC gyro ${pigpio_LIBRARY})
+target_link_libraries(FG LINK_PUBLIC pifdr_lib ${pigpio_LIBRARY})
 
 add_executable(FC FXOS_Test.cxx)
 
 target_include_directories(FC PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${pigpio_INCLUDE_DIRS})
-target_link_libraries(FC LINK_PUBLIC gyro ${pigpio_LIBRARY})
+target_link_libraries(FC LINK_PUBLIC pifdr_lib ${pigpio_LIBRARY})
 
 
 add_executable(SW SW_Test.cxx)
 
 target_include_directories(SW PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${pigpio_INCLUDE_DIRS})
-target_link_libraries(SW LINK_PUBLIC gyro ${pigpio_LIBRARY})
+target_link_libraries(SW LINK_PUBLIC pifdr_lib ${pigpio_LIBRARY})
 
 add_executable(Shutdown_Test Shutdown_Test.cxx)
