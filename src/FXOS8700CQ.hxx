@@ -2,10 +2,11 @@
 
 #include <mutex>
 #include <queue>
-#include "PIIO.hxx"
+
 
 namespace BlackBox {
-
+  class PIIO; 
+  
   // this is the byte-order corrected signed
   // measured data, magnetometer, and accelerometer
   struct MXData {

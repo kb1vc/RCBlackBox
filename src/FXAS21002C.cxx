@@ -1,7 +1,7 @@
 #include "FXAS21002C.hxx"
 #include <pigpio.h>
 #include <stdexcept>
-#include "PI_IO.hxx"
+#include "PIIO.hxx"
 #include <iostream>
 #include <mutex>
 
@@ -28,24 +28,21 @@ namespace BlackBox {
     gyro_p->serviceDReady(gpio, level, tick);
   }
   
-  FXAS21002C::FXAS21002C(unsigned char bus, unsigned char addr, 
+  FXAS21002C::FXAS21002C(PIIO * piio_p, unsigned char bus, unsigned char addr, 
 			 unsigned char int1_pin,
-			 Mode mode) : FXBase(bus, addr) {
-
+			 Mode mode) : piio_p(piio_p) {
     sequence_number = 0;
+
+    piio_p->openI2C(bus, addr, 0);
     
     init(mode, int1_pin);
   }
 
   FXAS21002C::~FXAS21002C() {
-    i2cClose(i2c_handle);
   }
 
   void FXAS21002C::writeByte(unsigned char reg, unsigned char dat) {
-    std::cerr << "Writing i2c byte  handle = " << i2c_handle 
-	      << "reg = " << std::hex
-	      << ((unsigned int) reg) << " " << ((unsigned int) dat) << std::dec << "\n";
-    int stat = i2cWriteByteData(i2c_handle, reg, dat); 
+    int stat = piio_p->writeRegByteI2C(reg, dat); 
     
     if(stat != 0) {
       std::cerr << "Got i2cWriteByteData error: " << stat << "\n";
@@ -54,7 +51,7 @@ namespace BlackBox {
   }
 
   unsigned char FXAS21002C::readByte(unsigned char reg) {
-    int ret = i2cReadByteData(i2c_handle, reg); 
+    int ret = piio_p->readRegI2C(reg); 
 
     if(ret < 0) {
       std::cerr << "Got i2cReadByteData error: " << ret << "\n";
@@ -70,9 +67,9 @@ namespace BlackBox {
     while(l) {
       int tl = (l > 30) ? 30 : l;
       l = l - tl;
-      int stat = i2cReadI2CBlockData(i2c_handle, reg, bp, tl); 
-      if(stat < 0) {
-	std::cerr << "Got i2cReadI2CBlockData error: " << stat << "\n";
+      bool stat = piio_p->readBlockI2C(reg, tl, bp);
+      if(!stat) {
+	std::cerr << "Got readBlock error: " << stat << "\n";
 	throw std::runtime_error("FXAS21002C: Failed to read block.\n");
       }
       bp += tl;      
@@ -131,8 +128,8 @@ namespace BlackBox {
       // and set the watermark at 16 -- once we have this many samples, we
       // will get an interrupt on pin 1.
       writeByte(F_SETUP_RW, FS_MODE_STOP | (FS_WMRK_M & 16));
-      // LPF at 8 Hz, limit range to about 3 RPS
-      writeByte(CTRL_REG0_RW, CR0_LPF_M | CR0_HPF_3 | CR0_HPF_EN | CR0_RANGE_1000);
+      // LPF at 8 Hz, limit range to about 3 RPS -- best choice LPF_H, 
+      writeByte(CTRL_REG0_RW, CR0_LPF_H | CR0_HPF_0 | CR0_HPF_EN | CR0_RANGE_1000);
       
       // FIFO interrupt on int1 pin
       // active high, totem pole output.
@@ -143,7 +140,8 @@ namespace BlackBox {
       writeByte(CTRL_REG3_RW, CR3_WRAPTOONE); 
 
       // connect the ISR
-      int stat = gpioSetISRFuncEx(int1_pin, RISING_EDGE, 0, fifoIntCallback, this);
+      piio_p->setMode(int1_pin, PI_INPUT);
+      int stat = piio_p->setISRCallBack(int1_pin, RISING_EDGE, 0, fifoIntCallback, this);
     }
     else {  // mode must be DR_INT or DR_POLL
       // disable the fifo
@@ -165,7 +163,8 @@ namespace BlackBox {
       // at once. 
       writeByte(CTRL_REG3_RW, 0);
 
-      int stat = gpioSetISRFuncEx(int1_pin, RISING_EDGE, 0, dReadyIntCallback, this);      
+      piio_p->setMode(int1_pin, PI_INPUT);
+      int stat = piio_p->setISRCallBack(int1_pin, RISING_EDGE, 0, dReadyIntCallback, this);      
     }
 
     // disable rate threshold    

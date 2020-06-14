@@ -7,8 +7,7 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/../cmake/Modules
 find_package(pigpio REQUIRED)
 
 set(PIFDR_LIB_SRCS
-#  FXAS21002C.cxx 
-#  FXBase.cxx 
+FXAS21002C.cxx 
 FXOS8700CQ.cxx 
 PIIORaw.cxx
 PIIOD.cxx
@@ -20,11 +19,10 @@ add_library(pifdr_lib ${PIFDR_LIB_SRCS})
 target_include_directories(pifdr_lib PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 
-##add_executable(FG FXAS_Test.cxx)
+add_executable(FG FXAS_Test.cxx)
 
-
-##target_include_directories(FG PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${pigpio_INCLUDE_DIRS})
-##target_link_libraries(FG LINK_PUBLIC pifdr_lib ${pigpio_LIBRARY})
+target_include_directories(FG PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${pigpio_INCLUDE_DIRS})
+target_link_libraries(FG LINK_PUBLIC pifdr_lib ${pigpio_LIBRARY} ${pigpiod_if2_LIBRARY})
 
 add_executable(FC FXOS_Test.cxx)
 

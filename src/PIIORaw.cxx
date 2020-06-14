@@ -87,7 +87,7 @@ namespace BlackBox {
   }
 	
   int PIIORaw::readBlockI2C(unsigned char reg, int len, char * buf) {
-    return i2cReadBlockData(i2c_handle, reg, buf);
+    return i2cReadI2CBlockData(i2c_handle, reg, buf, len);
   }
 
 

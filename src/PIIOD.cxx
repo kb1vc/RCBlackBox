@@ -90,7 +90,7 @@ namespace BlackBox {
   }
 	
   int PIIOD::readBlockI2C(unsigned char reg, int len, char * buf) {
-    return i2c_read_block_data(pigpio_server, i2c_handle, reg, buf);
+    return i2c_read_i2c_block_data(pigpio_server, i2c_handle, reg, buf, len);
   }
 
 
