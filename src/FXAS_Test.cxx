@@ -4,21 +4,6 @@
 #include "PIIOD.hxx"
 #include "PIIORaw.hxx"
 
-short swapEnds(unsigned short v)  {
-  short ret;
-
-  ret = ((v & 0xff) << 8) | ((v >> 8) & 0xff);
-
-  return ret; 
-}
-
-int divit(int a, int b) {
-  // get nearest good divide
-  int ret = a / b;
-  if((a % b) > (b/2)) ret++;
-
-  return ret;
-}
 
 
 int main(int argc, char * argv[]) {
@@ -40,8 +25,8 @@ int main(int argc, char * argv[]) {
 
   BlackBox::Rates rates[256];
 
-  int xa, ya, za;
-  xa = ya = za = 0;
+  float xa, ya, za;
+  xa = ya = za = 0.0;
   
   int xcorr, ycorr, zcorr;
   xcorr = ycorr = zcorr = 0;
@@ -51,48 +36,24 @@ int main(int argc, char * argv[]) {
     int numrates = gyro.getRates(256, rates);
     i += numrates;
   }
-  // Measure the drift rate as the device is still
-  for(i = 0; i < 100; ) { // 1000; ) {
-    int numrates = gyro.getRates(256, rates);
-    i += numrates;
-    for(int j = 0; j < numrates; j++) {
-      int x, y, z;
-      x = swapEnds(rates[j].x);
-      y = swapEnds(rates[j].y);
-      z = swapEnds(rates[j].z);
-      xcorr += x;
-      ycorr += y;
-      zcorr += z; 
-    }
-  }
   
   
-  std::cerr << "### Corrections: " << i << " " << xcorr / 1000 << " " << ycorr / 1000 << " " << zcorr / 1000 << "\n";
+  float xp,yp,zp;
+  xp = yp = zp = 0.0;
   for(int i = 0; i < 5000; ) {
     int numrates = gyro.getRates(256, rates);
+    xa = ya = za = 0;        
     if(numrates > 0) {
-      xa = ya = za = 0;
       for(int j = 0; j < numrates; j++) {
-	int x, y, z;
-	x = swapEnds(rates[j].x);
-	y = swapEnds(rates[j].y);
-	z = swapEnds(rates[j].z);
-	xa += x;
-	ya += y;
-	za += z;
-      }
-
-    
-      int inc = numrates / 2; 
-      xa = (xa + inc) / numrates;
-      ya = (ya + inc) / numrates;
-      za = (za + inc) / numrates;
-    
-      std::cout << std::dec << (i += numrates) << " "
+	xa = rates[j].x;
+	ya = rates[j].y;
+	za = rates[j].z;
+	std::cout << std::dec << (i += numrates) << " "
 		<< numrates << " "
-		<< rates[0].seq_no << " "
-		<< xa << " " << ya << " " << za << "\n";
-      std::cout.flush();
+		<< rates[j].seq_no << " "
+		<< xa << " " << ya << " " << za << "\n";      
+	std::cout.flush();
+      }
     }
     usleep(100);
   }

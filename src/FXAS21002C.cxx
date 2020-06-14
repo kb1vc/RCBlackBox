@@ -32,6 +32,9 @@ namespace BlackBox {
 			 unsigned char int1_pin,
 			 Mode mode) : piio_p(piio_p) {
     sequence_number = 0;
+    
+    // this will be adjusted by the various setup steps
+    scale_factor = 1.0 / 32768.0; // set it to something...
 
     piio_p->openI2C(bus, addr, 0);
     
@@ -128,8 +131,9 @@ namespace BlackBox {
       // and set the watermark at 16 -- once we have this many samples, we
       // will get an interrupt on pin 1.
       writeByte(F_SETUP_RW, FS_MODE_STOP | (FS_WMRK_M & 16));
-      // LPF at 8 Hz, limit range to about 3 RPS -- best choice LPF_H, 
-      writeByte(CTRL_REG0_RW, CR0_LPF_H | CR0_HPF_0 | CR0_HPF_EN | CR0_RANGE_1000);
+      // LPF at 8 Hz, limit range to about 3 RPS?
+      writeByte(CTRL_REG0_RW, CR0_LPF_L | CR0_HPF_3 | CR0_HPF_EN | CR0_RANGE_500);
+      scale_factor = 500.0 / 32768.0;  // because we chose the range as 500...
       
       // FIFO interrupt on int1 pin
       // active high, totem pole output.
@@ -181,9 +185,7 @@ namespace BlackBox {
       std::lock_guard<std::mutex> lck(gq_mutex);
       for(int i = 0; i < num_samps; i++) {
 	Rates v;
-	v.x = rate_block[i].x;
-	v.y = rate_block[i].y;
-	v.z = rate_block[i].z;
+	scaleBlock(rate_block[i], v);
 	v.seq_no = sequence_number++;
 	gyro_rates.push(v);
       }
@@ -208,10 +210,12 @@ namespace BlackBox {
 
   int FXAS21002C::getRates(int max_samples, Rates * samps) {
     int rv = 0;
+    int sa = gyro_rates.size();
     {
       std::lock_guard<std::mutex> lck(gq_mutex);
       if(!gyro_rates.empty()) {
-	for(int i = 0; i < gyro_rates.size(); i++) {
+	int lim = (sa > max_samples) ? max_samples : sa;
+	for(int i = 0; i < lim; i++) {
 	  samps[i] = gyro_rates.front();
 	  gyro_rates.pop();
 	  rv++;
@@ -220,4 +224,19 @@ namespace BlackBox {
     }
     return rv;
   }
+
+  short FXAS21002C::swapEnds(unsigned short v)  {
+    short ret;
+
+    ret = ((v & 0xff) << 8) | ((v >> 8) & 0xff);
+    
+    return ret; 
+  }
+  
+  void FXAS21002C::scaleBlock(const IRates & irate, Rates & out) {
+    out.x = ((float) swapEnds(irate.x)) * scale_factor;
+    out.y = ((float) swapEnds(irate.y)) * scale_factor;
+    out.z = ((float) swapEnds(irate.z)) * scale_factor;      
+  }
 }
+

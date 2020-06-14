@@ -11,7 +11,7 @@ namespace BlackBox {
   // This version of the Rate struct contains a sequence
   // number as well as the gyro rates.
   struct Rates {
-    short x, y, z; 
+    float x, y, z; 
     unsigned short seq_no; 
   };
 #pragma pack(pop)    
@@ -48,7 +48,13 @@ namespace BlackBox {
       unsigned short x, y, z;
     }; 
 #pragma pack(pop)
+
+    short swapEnds(unsigned short v);
     
+    float scale_factor; // in degrees/second per count
+    
+    void scaleBlock(const IRates & irate, Rates & out); 
+
     std::queue<Rates> gyro_rates;
     IRates rate_block[256];
     unsigned short sequence_number;
