@@ -18,13 +18,11 @@ namespace BlackBox {
 
   void FXAS21002C::fifoIntCallback(int gpio, int level, unsigned int tick, void * obj) {
     FXAS21002C * gyro_p = (FXAS21002C *) obj; 
-
     gyro_p->serviceFIFO(gpio, level, tick);
   }
 
   void FXAS21002C::dReadyIntCallback(int gpio, int level, unsigned int tick, void * obj) {
     FXAS21002C * gyro_p = (FXAS21002C *) obj; 
-
     gyro_p->serviceDReady(gpio, level, tick);
   }
   
@@ -210,10 +208,10 @@ namespace BlackBox {
 
   int FXAS21002C::getRates(int max_samples, Rates * samps) {
     int rv = 0;
-    int sa = gyro_rates.size();
     {
       std::lock_guard<std::mutex> lck(gq_mutex);
-      if(!gyro_rates.empty()) {
+      int sa = gyro_rates.size();
+      if(sa > 0) {
 	int lim = (sa > max_samples) ? max_samples : sa;
 	for(int i = 0; i < lim; i++) {
 	  samps[i] = gyro_rates.front();

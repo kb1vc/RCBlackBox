@@ -45,22 +45,23 @@ namespace BlackBox {
   void PIIOD::handleCallback(int server, unsigned int gpio, unsigned int level, 
 			     unsigned int tick, void * userdata) {
     auto cbr = (PinCallbackRec *) userdata;
-
-    cbr->cb(gpio, level, tick, cbr->userptr);
+    if(cbr != NULL) {
+      cbr->cb(gpio, level, tick, cbr->userptr);
+    }
+    else {
+      throw std::runtime_error("PIIOD::handleCallback got a null userdata ptr.");
+    }
   }
 
   bool PIIOD::setPinCallBack(unsigned int pin, 
 			       PinCallback cb, void * userptr) {
     return setupCallback(pin, EITHER_EDGE, new PinCallbackRec(cb, userptr));
-    
-    int stat = callback_ex(pigpio_server, pin, EITHER_EDGE, (CBFuncEx_t) cb, userptr);
-    return stat == 0;
   }
 
   bool PIIOD::setISRCallBack(unsigned int pin, 
 			       unsigned int edge, int timeout, 
 			       PinCallback cb, void * userptr) {
-    int stat = callback_ex(pigpio_server, pin, edge, (CBFuncEx_t) cb, userptr);
+    int stat = setupCallback(pin, edge, new PinCallbackRec(cb, userptr));
     return stat == 0;
   }
 
