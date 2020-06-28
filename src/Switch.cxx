@@ -22,6 +22,9 @@ namespace BlackBox {
     
     // setup the callback.
     int stat = piio_p->setPinCallBack(pin_num, dispatchCallBack, this);
+
+    // init pin state
+    pin_state = piio_p->read(pin_num);
   }
 
   void Switch::setHighCB(std::function<void(unsigned int, void*)> call_back, void * userptr) {

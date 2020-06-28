@@ -3,34 +3,42 @@
 #include "PIIORaw.hxx"
 #include "PIIOD.hxx"
 #include "Switch.hxx"
+#include "Lamp.hxx"
 
 int main() {
-  //  BlackBox::PIIORaw piio;
-  BlackBox::PIIOD piio;   
+  BlackBox::PIIORaw piio;
+  // BlackBox::PIIOD piio;   
 
-  const int sw_pin = 14;  
+  const int sw_pin = 14;
+  const int led_pin = 15;  
   BlackBox::Switch sw(&piio, sw_pin, 50000);
+  BlackBox::Lamp led(&piio, led_pin, 8);
 
-  const int led_pin = 15;
-  
-  piio.setMode(led_pin, PI_OUTPUT);
-
-  piio.setPWMRange(led_pin, 255);
-  piio.setPWMFrequency(led_pin, 0);
-  piio.setPWM(led_pin, 0);
-	
   bool v = false;
+  led.blink();
+
+  std::cerr << "waiting on button press.\n";
+  while(sw.getState()) {
+    usleep(1000);
+  }
+  std::cerr << "got it.  waiting on release.\n";
+  while(!sw.getState()) {
+    usleep(1000);
+  }
+  std::cerr << "ready\n";
+  
+  unsigned int bright = 1;
   while(1) {
     bool nv = sw.getState();
     if(nv != v) {
-      std::cerr << "Toggled!  Now " << (nv ? "HIGH" : "LOW") << "\n";
+      if(!v) {
+	bright++; 
+	led.setBrightness(bright);
+      }
+      
+      std::cerr << "Toggled!  Now " << (nv ? "HIGH" : "LOW") << " bright " << bright << "\n";
       v = nv;
-      if(!nv) {
-	piio.setPWM(led_pin, 32);
-      }
-      else {
-	piio.setPWM(led_pin, 0);
-      }
+      led.setState(!v);
     }
   }
 }

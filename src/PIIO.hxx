@@ -1,7 +1,15 @@
 #pragma once
+#include <stdexcept>
+#include <string>
 
 namespace BlackBox {
+  class PIIOException : public std::runtime_error {
+  public:
+    PIIOException(const std::string & what) : runtime_error("PIIO: " + what) { }
+  };
+
   typedef void(*PinCallback)(int, int, unsigned int, void*);
+
   class PIIO {
   public:
     PIIO() {

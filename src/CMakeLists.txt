@@ -11,6 +11,7 @@ FXAS21002C.cxx
 FXOS8700CQ.cxx 
 PIIORaw.cxx
 PIIOD.cxx
+Lamp.cxx
 Switch.cxx)  
 
 

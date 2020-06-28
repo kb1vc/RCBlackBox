@@ -9,6 +9,9 @@ namespace BlackBox {
 
   bool PIIOD::initPIGPIO() {
     pigpio_server = pigpio_start(NULL, NULL);
+    if(pigpio_server < 0) {
+      throw PIIOException("Could not configure port to server");
+    }
     return true; 
   }
 

@@ -15,11 +15,10 @@ namespace BlackBox {
     // two peoples separated by a common language. 
     int stat = gpioInitialise();
     
-    std::cerr << "PIGPIO initialized returns " << stat << "\n";
+    if(stat == PI_INIT_FAILED) {
+      throw PIIOException("Could not initialize raw pigpio.");
+    }
 
-    // setup debug
-    //    gpioCfgInternals(984762879, 7);
-    
     return pigpio_has_been_initialized = (stat > 0);
   }
 
