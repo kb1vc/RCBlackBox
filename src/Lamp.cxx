@@ -25,7 +25,7 @@ namespace BlackBox {
 
     piio_p->setPWMFrequency(pin_num, 100);
 
-    clear();
+    off();
   }
 
   void Lamp::setBrightness(unsigned int _brightness) {
@@ -55,11 +55,11 @@ namespace BlackBox {
 
   bool Lamp::getState() { return lamp_state; }
     
-  bool Lamp::set() {
+  bool Lamp::on() {
     return setState(true);
   }
 
-  bool Lamp::clear() {
+  bool Lamp::off() {
     return setState(false);
   }
 

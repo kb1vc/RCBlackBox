@@ -3,6 +3,8 @@
 #include <mutex>
 #include <queue>
 
+class std::ostream;
+
 namespace BlackBox {
 
   class PIIO;
@@ -13,6 +15,9 @@ namespace BlackBox {
   struct Rates {
     float x, y, z; 
     unsigned short seq_no; 
+
+    std::ostream & print(std::ostream & os);
+    static std::ostream & printFormat(std::ostream & os);
   };
 #pragma pack(pop)    
   

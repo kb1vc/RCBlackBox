@@ -4,6 +4,22 @@
 #include <iostream>
 
 namespace BlackBox {
+  std::ostream & MXData::print(std::ostream & os) {
+    os << "MX " << seq_no << " "
+       << ax << ","
+       << ay << ","
+       << az << ","
+       << mx << ","
+       << my << ","
+       << mz << "\n";
+    return os; 
+  }
+
+  std::ostream & MXData::printFormat(std::ostream & os) {
+    os << "FMT MX sequence_num accel_x accel_y accel_z mag_x mag_y mag_z\n";
+    return os; 
+  }
+
   FXOS8700CQ::FXOS8700CQ(PIIO * piio_p, unsigned char bus, unsigned char addr,
 			 unsigned char int1_pin, 
 			 Mode mode) : piio_p(piio_p) {
@@ -20,7 +36,8 @@ namespace BlackBox {
 
 
   void FXOS8700CQ::dReadyIntCallback(int gpio, int level, unsigned int tick, void * obj) {
-    FXOS8700CQ * accmag_p = (FXOS8700CQ *) obj; 
+    FXOS8700CQ * accmag_p = (FXOS8700CQ *) obj;
+    std::cerr << "+";
     accmag_p->serviceDReady(gpio, level, tick);
   }
 
@@ -50,10 +67,12 @@ namespace BlackBox {
 
   void FXOS8700CQ::serviceDReady(int gpio, int level, unsigned int tick) {
     // read the rates and store them in the outbound queue.
-    ISData raw; 
+    ISData raw;
+    std::cerr << "!";
     if(readDR(raw)) {
       // lock the queue
       std::lock_guard<std::mutex> lck(gq_mutex);
+      std::cerr << ".";
       MXData v;
       IS2MXData(v, raw);
       v.seq_no = sequence_number++; 
@@ -81,15 +100,18 @@ namespace BlackBox {
 
 
     if(mode == DR_INT) {
-      // interrupt from data ready... 
+      // interrupt from data ready...
+      std::cerr << "Setting up callback.\n";
+      std::cerr << " int status = " << ((int) piio_p->readRegI2C(INT_SOURCE_RO)) << "\n";      
+      piio_p->writeRegByteI2C(CTRL_REG3_RW, CR3_IPOL);
       piio_p->writeRegByteI2C(CTRL_REG4_RW, CR4_INT_EN_DRDY);
-      piio_p->writeRegByteI2C(CTRL_REG5_RW, CR5_INT_CFG_DRDY); // send int to INT1.
+      piio_p->writeRegByteI2C(CTRL_REG5_RW, CR5_INT_CFG_DRDY);
       piio_p->setISRCallBack(int1_pin, RISING_EDGE, 0, dReadyIntCallback, this);
     }
   }
   
   int FXOS8700CQ::getMX(int max_samps, MXData * dat_p) {
-    int i; 
+    int i;
     for(i = 0; i < max_samps; i++) {
       if(mx_queue.empty()) return i;
       dat_p[i] = mx_queue.front(); mx_queue.pop();

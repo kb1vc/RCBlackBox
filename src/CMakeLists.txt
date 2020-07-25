@@ -37,3 +37,5 @@ target_include_directories(SW PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${pigpio_INCLUD
 target_link_libraries(SW LINK_PUBLIC pifdr_lib ${pigpio_LIBRARY} ${pigpiod_if2_LIBRARY})
 
 add_executable(Shutdown_Test Shutdown_Test.cxx)
+
+add_executable(Util_Test Util_Test.cxx Utils.cxx)

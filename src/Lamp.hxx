@@ -22,9 +22,9 @@ namespace BlackBox {
 
     bool getState();
     
-    bool set();
+    bool on();
 
-    bool clear();
+    bool off();
 
     bool blink(bool blink_en = true);
 

@@ -18,6 +18,8 @@ namespace BlackBox {
     Switch(PIIO * piio_p, 
 	   unsigned int pin_num, unsigned int us_delay = 10000); // 10mS debounce time
 
+    bool waitForSwitch(bool state, unsigned int sleep_interval = 10000);
+    
     bool getState() const;
 
     void setDebounceInterval(unsigned int us_delay);

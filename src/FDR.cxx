@@ -1,5 +1,7 @@
 #include "FXAS21002C.hxx"
 #include "FXOS8700CQ.hxx"
+#include "Lamp.hxx"
+#include "Switch.hxx"
 #include <iostream>
 #include <unistd.h>
 #include "PIIOD.hxx"
@@ -7,84 +9,102 @@
 
 // Flight Data Recorder based on FXAS21002C (gyro, accelerometer) and FXOS8700CQ (compass)
 
+namespace BlackBox { 
+  FDR::FDR(bool use_piio_server) {
+    if(use_piio_server) {
+      std::cerr << "Creating pigpio client\n";
+      piio_p = new BlackBox::PIIOD;
+    }
+    else {
+      std::cerr << "Creating pigpio RAW\n";    
+      piio_p = new BlackBox::PIIORaw; 
+    }
 
-int main(int argc, char * argv[]) {
-  // create a connection. We're going to use
-  // GPIO 4 and 17 for the interrupts. (4 for the Gyro FIFO interrupt, 17)
-  BlackBox::PIIO * piio_p; 
-
-  // This supports either the daemon interface, or the raw interface. 
-  if((argc > 1) && (argv[1][0] == 'd')) {
-    std::cerr << "Creating pigpio client\n";
-    piio_p = new BlackBox::PIIOD;
-  }
-  else {
-    std::cerr << "Creating pigpio RAW\n";    
-    piio_p = new BlackBox::PIIORaw; 
-  }
-
-  // setup the gyro device. 
-  BlackBox::FXAS21002C gyro(piio_p, 1, 0x21, 4, BlackBox::FXAS21002C::FIFO);
-  std::cerr << "Created gyro\n";
-  BlackBox::FXOS8700CQ compass(piio_p, 1, 0x1f, 17, BlackBox::FXOS8700CQ::DR_POLL);
-  std::cerr << "Created compass\n";
-
-  const int sw_pin = 14;
-  const int led_pin = 15;  
-  BlackBox::Switch sw(piio_p, sw_pin, 50000);
-  BlackBox::Lamp led(piio_p, led_pin, 8);
-
-  // open the fdr object.
-  BlackBox::BlackBox fdr(gyro, compass, sw);
   
-  // start the devices
-  fdr.run();
-  
-  gyro.start(BlackBox::FXAS21002C::CR1_DATA_RATE_25);
-  compass.start();
-  
-  std::cerr << "Started gyro and compass\n";
-  
-  BlackBox::Rates rates[256];
+    // setup the gyro device. 
+    gyro_p = new BlackBox::FXAS21002C(piio_p, 1, 0x21, 4, BlackBox::FXAS21002C::FIFO);
+    std::cerr << "Created gyro\n";
+    compass_p = new BlackBox::FXOS8700CQ(piio_p, 1, 0x1f, 17, BlackBox::FXOS8700CQ::DR_INT);
+    std::cerr << "Created compass\n";
 
-  std::cerr << "Allocated rates\n";
+    const int sw_pin = 14;
+    const int led_pin = 15;  
+    sw_p = new BlackBox::Switch(piio_p, sw_pin, 50000);
+    led_p = new BlackBox::Lamp(piio_p, led_pin, 8);
+    
+    // turn off the lamp.
+    led_p->clear();
 
-  float xa, ya, za;
-  xa = ya = za = 0.0;
-  
-  int xcorr, ycorr, zcorr;
-  xcorr = ycorr = zcorr = 0;
-  // ignore the first second or so as the device settles.
-  int i; 
-  for(i = 0; i < 1000; ) { //1000; ) {
-    int numrates = gyro.getRates(256, rates);
-    i += numrates;
+    // start the video process.
+    video_p = new BlackBox::Video();
   }
 
-  std::cout << "Through warmup.\n"; std::cout.flush();
+
+  void FDR::run() {
+    // wait for the start button.
+    sw_p->waitForSwitch(true); 
+    sw_p->waitForSwitch(false);
   
-  float xp,yp,zp;
-  xp = yp = zp = 0.0;
-  for(int i = 0; i < 1000; ) {
-    int numrates = gyro.getRates(256, rates);
-    xa = ya = za = 0;        
-    if(numrates > 0) {
-      for(int j = 0; j < numrates; j++) {
-	xa = rates[j].x;
-	ya = rates[j].y;
-	za = rates[j].z;
-	xp += xa;
-	yp += ya;
-	zp += za;
-	std::cout << std::dec << (i++) << " "
-		<< numrates << " "
-		<< rates[j].seq_no << " "
-		<< xa << " " << ya << " " << za << " "
-		<< xp << " " << yp << " " << zp << "\n";      	
-	std::cout.flush();
-	
+    // show that we're running. 
+    led_p->blink(true);
+
+    // start the gyro
+    gyro_p->start(BlackBox::FXAS21002C::CR1_DATA_RATE_25);
+    // start the compass
+    compass_p->start();
+    std::cerr << "Started gyro and compass\n";
+  
+    // start the video
+    video_p->start();
+  
+    BlackBox::Rates rates[256];
+    BlackBox::MXData bearings[256];
+  
+    // loop
+    int i = interval_counter;
+    while(button_not_pressed) {
+      // wait for gyro buffer
+      int num_rates = gyro_p->getRates(256, rates);
+      // read compass buffer if available
+      int num_bearings = compass_p->getMX(256, bearings);
+
+      // print the records. 
+      if((num_rates | num_bearings) != 0) {
+	// time stamp
+	writeTimeStamp(log_stream);
+	// write records.      
+	for(int i = 0; i < num_rates; i++) {
+	  rates[i].print(log_stream);
+	}
+	for(int i = 0; i < num_bearings; i++) {
+	  bearings[i].print(log_stream);
+	}
+
+	// sync files
+	log_stream.flush();
       }
     }
-    //    usleep(100);
+
+    // close the log
+    log_stream.close();
+  
+    // turn off the lamp
+    led_p->clear();
+
+    // stop the video
+    video_p->stop();
+
+    // stop the gyro and compass
+    gyro_p->stop();
+    compass_p->stop();
+  }
+
+  std::ostream & openLog(const std::string & basename) {
+    std::string fname = basename + getDate4FName() + ".fdr_log";
+
+    log_stream.open(fname);
+    log_stream << "FMT TS sec nsec\n";
+    BlackBox::MXData::printFormat(log_stream);
+    BlackBox::Rates::printFormat(log_stream);
   }
 }

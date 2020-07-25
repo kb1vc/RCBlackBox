@@ -4,6 +4,7 @@
 #include "PIIOD.hxx"
 #include "Switch.hxx"
 #include "Lamp.hxx"
+#include <unistd.h>
 
 int main() {
   BlackBox::PIIORaw piio;

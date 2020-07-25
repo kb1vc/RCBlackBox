@@ -15,7 +15,17 @@ namespace BlackBox {
     std::cerr << "\n";
   }
 
+  std::ostream & Rates::print(std::ostream & os) {
+    os << "GY " << seq_no << " "
+       << x << " " << y << " " << z << "\n";
+    return os; 
+  }
 
+  std::ostream & Rates::printFormat(std::ostream & os) {
+    os << "GY sequence_num xrot yrot zrot\n";
+    return os; 
+  }
+  
   void FXAS21002C::fifoIntCallback(int gpio, int level, unsigned int tick, void * obj) {
     FXAS21002C * gyro_p = (FXAS21002C *) obj; 
     gyro_p->serviceFIFO(gpio, level, tick);

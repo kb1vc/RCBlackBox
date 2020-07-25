@@ -3,6 +3,7 @@
 #include <mutex>
 #include <queue>
 
+class std::ostream;
 
 namespace BlackBox {
   class PIIO; 
@@ -13,6 +14,8 @@ namespace BlackBox {
     short ax, ay, az;    
     short mx, my, mz;
     int seq_no;
+    
+    std::ostream & print(std::ostream & os);
   };
   
   class FXOS8700CQ {
@@ -386,6 +389,7 @@ namespace BlackBox {
     static const unsigned char MCR3_ASLP_OS_S = 4;
     static const unsigned char MCR3_THS_XYZ_UPDATE = 0x8;
 
+    
     static const unsigned char M_INT_SRC_RO = 0x5e;
     static const unsigned char MIS_THS = 0x4;
     static const unsigned char MIS_VECM = 0x2;

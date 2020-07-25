@@ -4,6 +4,7 @@
 #include "PIIO.hxx"
 #include "Switch.hxx"
 #include <pigpio.h>
+#include <unistd.h>
 
 namespace BlackBox {
 
@@ -66,5 +67,13 @@ namespace BlackBox {
   void Switch::switchEventCallBack(unsigned int tick, int level) {
     pin_state = (level != 0);
     runCallBacks(tick);
+  }
+
+  bool Switch::waitForSwitch(bool state, unsigned int sleep_interval) {
+    while(getState() != state) {
+      usleep(sleep_interval);
+    }
+    
+    return getState();
   }
 }
