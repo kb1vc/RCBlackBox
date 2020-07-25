@@ -2,8 +2,7 @@
 
 #include <mutex>
 #include <queue>
-
-class std::ostream;
+#include <iostream>
 
 namespace BlackBox {
 
@@ -38,9 +37,9 @@ namespace BlackBox {
     
     ~FXAS21002C();
 
-
-
     int getRates(int max_samples, Rates * samps);
+
+    void stop() { }
     
   protected:
 

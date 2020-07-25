@@ -2,8 +2,7 @@
 
 #include <mutex>
 #include <queue>
-
-class std::ostream;
+#include <iostream>
 
 namespace BlackBox {
   class PIIO; 
@@ -14,6 +13,8 @@ namespace BlackBox {
     short ax, ay, az;    
     short mx, my, mz;
     int seq_no;
+
+    static std::ostream & printFormat(std::ostream & os);
     
     std::ostream & print(std::ostream & os);
   };
@@ -37,6 +38,7 @@ namespace BlackBox {
 
     int getMX(int max_samps, MXData * dat_p);
     
+    void stop() { }
     
   protected:
 

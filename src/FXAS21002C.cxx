@@ -22,7 +22,7 @@ namespace BlackBox {
   }
 
   std::ostream & Rates::printFormat(std::ostream & os) {
-    os << "GY sequence_num xrot yrot zrot\n";
+    os << "FMT GY sequence_num xrot yrot zrot\n";
     return os; 
   }
   

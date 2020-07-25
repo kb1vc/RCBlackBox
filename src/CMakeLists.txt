@@ -12,7 +12,9 @@ FXOS8700CQ.cxx
 PIIORaw.cxx
 PIIOD.cxx
 Lamp.cxx
-Switch.cxx)  
+Switch.cxx
+Video.cxx
+FDR.cxx)  
 
 
 add_library(pifdr_lib ${PIFDR_LIB_SRCS})
@@ -39,3 +41,7 @@ target_link_libraries(SW LINK_PUBLIC pifdr_lib ${pigpio_LIBRARY} ${pigpiod_if2_L
 add_executable(Shutdown_Test Shutdown_Test.cxx)
 
 add_executable(Util_Test Util_Test.cxx Utils.cxx)
+
+add_executable(FDR_Main FDR_Main.cxx)
+target_include_directories(FDR_Main PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${pigpio_INCLUDE_DIRS})
+target_link_libraries(FDR_Main LINK_PUBLIC pifdr_lib ${pigpio_LIBRARY} ${pigpiod_if2_LIBRARY})

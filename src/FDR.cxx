@@ -2,10 +2,18 @@
 #include "FXOS8700CQ.hxx"
 #include "Lamp.hxx"
 #include "Switch.hxx"
-#include <iostream>
-#include <unistd.h>
+#include "Video.hxx"
 #include "PIIOD.hxx"
 #include "PIIORaw.hxx"
+#include "FDR.hxx"
+#include <iostream>
+#include <unistd.h>
+#include <ctime>
+#include <sstream>
+#include <iomanip>
+#include <chrono>
+
+
 
 // Flight Data Recorder based on FXAS21002C (gyro, accelerometer) and FXOS8700CQ (compass)
 
@@ -33,7 +41,7 @@ namespace BlackBox {
     led_p = new BlackBox::Lamp(piio_p, led_pin, 8);
     
     // turn off the lamp.
-    led_p->clear();
+    led_p->off();
 
     // start the video process.
     video_p = new BlackBox::Video();
@@ -42,9 +50,11 @@ namespace BlackBox {
 
   void FDR::run() {
     // wait for the start button.
-    sw_p->waitForSwitch(true); 
-    sw_p->waitForSwitch(false);
-  
+    sw_p->waitForSwitch(false); 
+    sw_p->waitForSwitch(true);
+
+    std::cerr << "Ready to start\n";
+
     // show that we're running. 
     led_p->blink(true);
 
@@ -61,8 +71,7 @@ namespace BlackBox {
     BlackBox::MXData bearings[256];
   
     // loop
-    int i = interval_counter;
-    while(button_not_pressed) {
+    while(sw_p->getState()) {
       // wait for gyro buffer
       int num_rates = gyro_p->getRates(256, rates);
       // read compass buffer if available
@@ -71,7 +80,7 @@ namespace BlackBox {
       // print the records. 
       if((num_rates | num_bearings) != 0) {
 	// time stamp
-	writeTimeStamp(log_stream);
+	log_stream << getTimeStamp() << "\n";
 	// write records.      
 	for(int i = 0; i < num_rates; i++) {
 	  rates[i].print(log_stream);
@@ -89,7 +98,7 @@ namespace BlackBox {
     log_stream.close();
   
     // turn off the lamp
-    led_p->clear();
+    led_p->off();
 
     // stop the video
     video_p->stop();
@@ -99,12 +108,34 @@ namespace BlackBox {
     compass_p->stop();
   }
 
-  std::ostream & openLog(const std::string & basename) {
-    std::string fname = basename + getDate4FName() + ".fdr_log";
+  std::ostream & FDR::openLog(const std::string & basename) {
+    std::string fname = basename + getTimeDate() + ".fdr_log";
 
     log_stream.open(fname);
-    log_stream << "FMT TS sec nsec\n";
+    log_stream << "FMT TS sec msec\n";
     BlackBox::MXData::printFormat(log_stream);
     BlackBox::Rates::printFormat(log_stream);
+    
+    return log_stream;
+  }
+
+  std::string FDR::getTimeStamp() {
+    std::stringstream ss;
+    struct timespec t;
+    clock_gettime(CLOCK_REALTIME, &t);
+    
+    unsigned long msec = t.tv_nsec / 1000000;
+    ss << t.tv_sec <<  " " << msec;
+    return ss.str();
+  }
+
+  std::string FDR::getTimeDate() {
+    std::stringstream ss;
+    using std::chrono::system_clock; 
+    std::time_t tt = system_clock::to_time_t(system_clock::now());
+    struct std::tm * ptm = std::localtime(&tt);
+    
+    ss << std::put_time(ptm, "%y-%m-%d_%OH:%OM:%OS");
+    return ss.str();
   }
 }

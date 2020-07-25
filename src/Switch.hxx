@@ -16,7 +16,7 @@ namespace BlackBox {
   class Switch {
   public:
     Switch(PIIO * piio_p, 
-	   unsigned int pin_num, unsigned int us_delay = 10000); // 10mS debounce time
+	   unsigned int pin_num, unsigned int us_delay = 100000); // 100mS debounce time
 
     bool waitForSwitch(bool state, unsigned int sleep_interval = 10000);
     
