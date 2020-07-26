@@ -2,6 +2,8 @@
 #include <pigpio.h>
 #include "PIIO.hxx"
 #include <iostream>
+#include <iomanip>
+#include <unistd.h>
 
 namespace BlackBox {
   std::ostream & MXData::print(std::ostream & os) {
@@ -54,15 +56,20 @@ namespace BlackBox {
   int FXOS8700CQ::readDR(ISData & raw) {
     // return 0 if we got nothing
     // first read the STATUS register.
-    std::cerr << "}";                
-    unsigned char stat = piio_p->readRegI2C(M_DR_STATUS_RO);
+    unsigned int intsr = piio_p->readRegI2C(INT_SOURCE_RO);
+    std::cerr << "{" << intsr << "}";                
+    unsigned int stat = piio_p->readRegI2C(M_DR_STATUS_RO);
     if(stat & DRS_ZYXDR) {
       // read the combined mag and acc registers, starting with M_OUT_X_MSB
       //      readBlock(M_OUT_X_MSB_RO, sizeof(ISData), (char*) &raw);
-      piio_p->readBlockI2C(OUT_X_MSB_RO, sizeof(ISData), (char*) &raw);      
+      int sz = piio_p->readBlockI2C(OUT_X_MSB_RO, sizeof(ISData), (char*) &raw);
+      intsr = piio_p->readRegI2C(INT_SOURCE_RO);      
+      int drs = piio_p->readRegI2C(M_DR_STATUS_RO);
+      std::cerr << (std::hex) << "{" << stat << "/" << sz << "+" << intsr << "-" << drs << (std::dec) << "}";
       return 1; 
     }
     else {
+      std::cerr << "+}";            
       return 0;
     }
   }
@@ -81,6 +88,7 @@ namespace BlackBox {
 	mx_queue.push(v);
       }
     }
+    std::cerr << "#`";
   }
   
 
@@ -88,6 +96,9 @@ namespace BlackBox {
     // put the device to sleep
     std::cerr << "|";    
     piio_p->writeRegByteI2C(CTRL_REG1_RW, 0);
+    // reset the device
+    piio_p->writeRegByteI2C(CTRL_REG2_RW, CR2_RESET);
+    usleep(2000); // sleep for 2ms see page 45 of the datasheet
 
     // enable the accel and mag in hybrid mode
     // sample at 6.25 Hz

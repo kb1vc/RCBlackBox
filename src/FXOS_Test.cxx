@@ -51,11 +51,18 @@ int main(int argc, char ** argv) {
     piio_p = new BlackBox::PIIORaw; 
   }
 
+  if(0) {
+    BlackBox::FXOS8700CQ comp(piio_p, 1, 0x1F, 17, BlackBox::FXOS8700CQ::DR_POLL);
+    comp.start();    
+    doPoll(comp);
+  }
+  else {
+    BlackBox::FXOS8700CQ comp(piio_p, 1, 0x1F, 17, BlackBox::FXOS8700CQ::DR_INT);
+    comp.start();
+    doInt(comp);
+  }
   // BlackBox::PIIOD piio;  
-  // BlackBox::FXOS8700CQ comp(piio_p, 1, 0x1F, 17, BlackBox::FXOS8700CQ::DR_POLL);
-  BlackBox::FXOS8700CQ comp(piio_p, 1, 0x1F, 17, BlackBox::FXOS8700CQ::DR_INT);  
 
-  comp.start();
-  // doPoll(comp);
-  doInt(comp);
+
+
 }
