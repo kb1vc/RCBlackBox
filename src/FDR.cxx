@@ -30,8 +30,9 @@ namespace BlackBox {
 
   
     // setup the gyro device. 
-    gyro_p = new BlackBox::FXAS21002C(piio_p, 1, 0x21, 4, BlackBox::FXAS21002C::FIFO);
+    //    gyro_p = new BlackBox::FXAS21002C(piio_p, 1, 0x21, 4, BlackBox::FXAS21002C::FIFO);
     std::cerr << "Created gyro\n";
+
     compass_p = new BlackBox::FXOS8700CQ(piio_p, 1, 0x1f, 17, BlackBox::FXOS8700CQ::DR_INT);
     std::cerr << "Created compass\n";
 
@@ -53,13 +54,14 @@ namespace BlackBox {
     sw_p->waitForSwitch(false); 
     sw_p->waitForSwitch(true);
 
+    
     std::cerr << "Ready to start\n";
 
     // show that we're running. 
     led_p->blink(true);
 
     // start the gyro
-    gyro_p->start(BlackBox::FXAS21002C::CR1_DATA_RATE_25);
+    //    gyro_p->start(BlackBox::FXAS21002C::CR1_DATA_RATE_25);
     // start the compass
     compass_p->start();
     std::cerr << "Started gyro and compass\n";
@@ -73,7 +75,8 @@ namespace BlackBox {
     // loop
     while(sw_p->getState()) {
       // wait for gyro buffer
-      int num_rates = gyro_p->getRates(256, rates);
+      //      int num_rates = gyro_p->getRates(256, rates);
+      int num_rates = 0; 
       // read compass buffer if available
       int num_bearings = compass_p->getMX(256, bearings);
 
@@ -104,7 +107,7 @@ namespace BlackBox {
     video_p->stop();
 
     // stop the gyro and compass
-    gyro_p->stop();
+    //    gyro_p->stop();
     compass_p->stop();
   }
 

@@ -219,6 +219,8 @@ namespace BlackBox {
 
   protected:
     PIIO * piio_p; 
+    Mode mode;
+    unsigned char int1_pin; 
     
     static void fifoIntCallback(int gpio, int level, unsigned int tick, void * obj);
 

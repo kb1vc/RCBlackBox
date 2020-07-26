@@ -42,7 +42,7 @@ int main(int argc, char * argv[]) {
   xcorr = ycorr = zcorr = 0;
   // ignore the first second or so as the device settles.
   int i; 
-  for(i = 0; i < 1000; ) { //1000; ) {
+  for(i = 0; i < 10; ) { //1000; ) {
     int numrates = gyro.getRates(256, rates);
     i += numrates;
   }

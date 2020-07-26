@@ -37,12 +37,13 @@ namespace BlackBox {
 
   void FXOS8700CQ::dReadyIntCallback(int gpio, int level, unsigned int tick, void * obj) {
     FXOS8700CQ * accmag_p = (FXOS8700CQ *) obj;
-    std::cerr << "+";
+    std::cerr << "[";        
     accmag_p->serviceDReady(gpio, level, tick);
   }
 
   int FXOS8700CQ::readDR(MXData & mx) {
     ISData raw;
+    std::cerr << "{";            
     if(readDR(raw)) {
       IS2MXData(mx, raw);
       mx.seq_no = sequence_number ++; 
@@ -52,7 +53,8 @@ namespace BlackBox {
   }
   int FXOS8700CQ::readDR(ISData & raw) {
     // return 0 if we got nothing
-    // first read the STATUS register. 
+    // first read the STATUS register.
+    std::cerr << "}";                
     unsigned char stat = piio_p->readRegI2C(M_DR_STATUS_RO);
     if(stat & DRS_ZYXDR) {
       // read the combined mag and acc registers, starting with M_OUT_X_MSB
@@ -68,11 +70,10 @@ namespace BlackBox {
   void FXOS8700CQ::serviceDReady(int gpio, int level, unsigned int tick) {
     // read the rates and store them in the outbound queue.
     ISData raw;
-    std::cerr << "!";
+    std::cerr << "%";
     if(readDR(raw)) {
       // lock the queue
       std::lock_guard<std::mutex> lck(gq_mutex);
-      std::cerr << ".";
       MXData v;
       IS2MXData(v, raw);
       v.seq_no = sequence_number++; 
@@ -85,6 +86,7 @@ namespace BlackBox {
 
   void FXOS8700CQ::init(Mode mode, unsigned char int1_pin) {
     // put the device to sleep
+    std::cerr << "|";    
     piio_p->writeRegByteI2C(CTRL_REG1_RW, 0);
 
     // enable the accel and mag in hybrid mode
@@ -101,8 +103,6 @@ namespace BlackBox {
 
     if(mode == DR_INT) {
       // interrupt from data ready...
-      std::cerr << "Setting up callback.\n";
-      std::cerr << " int status = " << ((int) piio_p->readRegI2C(INT_SOURCE_RO)) << "\n";      
       piio_p->writeRegByteI2C(CTRL_REG3_RW, CR3_IPOL);
       piio_p->writeRegByteI2C(CTRL_REG4_RW, CR4_INT_EN_DRDY);
       piio_p->writeRegByteI2C(CTRL_REG5_RW, CR5_INT_CFG_DRDY);
@@ -112,14 +112,22 @@ namespace BlackBox {
   
   int FXOS8700CQ::getMX(int max_samps, MXData * dat_p) {
     int i;
-    for(i = 0; i < max_samps; i++) {
-      if(mx_queue.empty()) return i;
-      dat_p[i] = mx_queue.front(); mx_queue.pop();
+    {
+      std::lock_guard<std::mutex> lck(gq_mutex);
+      for(i = 0; i < max_samps; i++) {
+	if(mx_queue.empty()) {
+	  return i;
+	}
+	else {
+	  dat_p[i] = mx_queue.front(); mx_queue.pop();
+	}
+      }
     }
     return max_samps;
   }
   void FXOS8700CQ::start() {
     // turn on the accelerometer
+    std::cerr << "@";
     piio_p->writeRegByteI2C(CTRL_REG1_RW, (CR1_DATA_RATE_6r25 << CR1_DR_S) | CR1_LNOISE | CR1_ACTIVE);
   }
 }

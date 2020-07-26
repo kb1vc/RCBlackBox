@@ -52,10 +52,10 @@ int main(int argc, char ** argv) {
   }
 
   // BlackBox::PIIOD piio;  
-  //  BlackBox::FXOS8700CQ comp(piio_p, 1, 0x1F, 17, BlackBox::FXOS8700CQ::DR_POLL);
+  // BlackBox::FXOS8700CQ comp(piio_p, 1, 0x1F, 17, BlackBox::FXOS8700CQ::DR_POLL);
   BlackBox::FXOS8700CQ comp(piio_p, 1, 0x1F, 17, BlackBox::FXOS8700CQ::DR_INT);  
 
   comp.start();
-  //doPoll(comp);
-   doInt(comp);
+  // doPoll(comp);
+  doInt(comp);
 }
