@@ -37,5 +37,6 @@ namespace BlackBox {
     BlackBox::Video * video_p;
     
     std::ofstream log_stream;
+    std::string video_fname; 
   };
 }

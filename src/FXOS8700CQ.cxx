@@ -43,13 +43,11 @@ namespace BlackBox {
 
   void FXOS8700CQ::dReadyIntCallback(int gpio, int level, unsigned int tick, void * obj) {
     FXOS8700CQ * accmag_p = (FXOS8700CQ *) obj;
-    std::cerr << "[";        
     accmag_p->serviceDReady(gpio, level, tick);
   }
 
   int FXOS8700CQ::readDR(MXData & mx) {
     ISData raw;
-    std::cerr << "{";            
     if(readDR(raw)) {
       IS2MXData(mx, raw);
       mx.seq_no = sequence_number ++; 
@@ -61,7 +59,6 @@ namespace BlackBox {
     // return 0 if we got nothing
     // first read the STATUS register.
     unsigned int intsr = piio_p->readRegI2C(i2c_handle, INT_SOURCE_RO);
-    std::cerr << "{" << intsr << "}";                
     unsigned int stat = piio_p->readRegI2C(i2c_handle, M_DR_STATUS_RO);
     if(stat & DRS_ZYXDR) {
       // read the combined mag and acc registers, starting with M_OUT_X_MSB
@@ -69,11 +66,9 @@ namespace BlackBox {
       int sz = piio_p->readBlockI2C(i2c_handle, OUT_X_MSB_RO, sizeof(ISData), (char*) &raw);
       intsr = piio_p->readRegI2C(i2c_handle, INT_SOURCE_RO);      
       int drs = piio_p->readRegI2C(i2c_handle, M_DR_STATUS_RO);
-      std::cerr << (std::hex) << "{" << stat << "/" << sz << "+" << intsr << "-" << drs << (std::dec) << "}";
       return 1; 
     }
     else {
-      std::cerr << "+}";            
       return 0;
     }
   }
@@ -81,7 +76,6 @@ namespace BlackBox {
   void FXOS8700CQ::serviceDReady(int gpio, int level, unsigned int tick) {
     // read the rates and store them in the outbound queue.
     ISData raw;
-    std::cerr << "%";
     if(readDR(raw)) {
       // lock the queue
       std::lock_guard<std::mutex> lck(gq_mutex);
@@ -92,13 +86,11 @@ namespace BlackBox {
 	mx_queue.push(v);
       }
     }
-    std::cerr << "#`";
   }
   
 
   void FXOS8700CQ::init(Mode mode, unsigned char int1_pin) {
     // put the device to sleep
-    std::cerr << "|";    
     piio_p->writeRegByteI2C(i2c_handle, CTRL_REG1_RW, 0);
     // reset the device
     piio_p->writeRegByteI2C(i2c_handle, CTRL_REG2_RW, CR2_RESET);
@@ -142,7 +134,6 @@ namespace BlackBox {
   }
   void FXOS8700CQ::start() {
     // turn on the accelerometer
-    std::cerr << "@";
     piio_p->writeRegByteI2C(i2c_handle, CTRL_REG1_RW, (CR1_DATA_RATE_6r25 << CR1_DR_S) | CR1_LNOISE | CR1_ACTIVE);
   }
 }

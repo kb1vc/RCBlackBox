@@ -66,12 +66,15 @@ namespace BlackBox {
     compass_p->start();
     std::cerr << "Started gyro and compass\n";
   
-    // start the video
-    video_p->start();
   
     BlackBox::Rates rates[256];
     BlackBox::MXData bearings[256];
-  
+
+    video_p->openVidFile(video_fname);
+
+    // start the video
+    video_p->start();
+    
     // loop
     while(sw_p->getState()) {
       // wait for gyro buffer
@@ -111,8 +114,9 @@ namespace BlackBox {
   }
 
   std::ostream & FDR::openLog(const std::string & basename) {
-    std::string fname = basename + getTimeDate() + ".fdr_log";
-
+    std::string td = getTimeDate();
+    std::string fname = basename + td + ".fdr_log";
+    video_fname = basename + td + ".h264";
     log_stream.open(fname);
     log_stream << "FMT TS sec msec\n";
     BlackBox::MXData::printFormat(log_stream);
@@ -137,7 +141,7 @@ namespace BlackBox {
     std::time_t tt = system_clock::to_time_t(system_clock::now());
     struct std::tm * ptm = std::localtime(&tt);
     
-    ss << std::put_time(ptm, "%y-%m-%d_%OH:%OM:%OS");
+    ss << std::put_time(ptm, "%y-%m-%d_%OH_%OM_%OS");
     return ss.str();
   }
 }

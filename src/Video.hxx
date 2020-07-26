@@ -13,5 +13,9 @@ namespace BlackBox {
     void stop();
 
     void pause();
+    
+  protected:
+    std::string video_fname;
+    int pid; 
   };
 }

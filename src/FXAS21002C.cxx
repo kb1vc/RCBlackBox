@@ -107,7 +107,6 @@ namespace BlackBox {
     // auto-increment to the next register and wrap back around
     // to X_MSB.
     if(fifo_entries > 0) {
-      std::cerr << "FXAS::readFIFO entries " << fifo_entries << "\n";
       readBlock(OUT_X_MSB_RO, fifo_bytes, (char*) rate_block); 
     }
     return fifo_entries; 
