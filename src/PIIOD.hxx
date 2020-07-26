@@ -10,7 +10,6 @@ namespace BlackBox {
     }
 
     ~PIIOD() {
-      closeI2C();
       closePIGPIO();
     }
     
@@ -33,13 +32,13 @@ namespace BlackBox {
     bool setPWM(unsigned int pin, unsigned int duty_cycle);
 
     // i2c functions
-    bool openI2C(unsigned int bus, unsigned int addr, unsigned int flags);
-    bool closeI2C();
+    int openI2C(unsigned int bus, unsigned int addr, unsigned int flags);
+    bool closeI2C(int i2c_handle);
       
-    int readRegI2C(unsigned char reg);
-    int writeRegByteI2C(unsigned char reg, unsigned int val);
+    int readRegI2C(int i2c_handle, unsigned char reg);
+    int writeRegByteI2C(int i2c_handle, unsigned char reg, unsigned int val);
 	
-    int readBlockI2C(unsigned char reg, int len, char * buf);
+    int readBlockI2C(int i2c_handle, unsigned char reg, int len, char * buf);
 
   protected:
     /**
@@ -51,8 +50,6 @@ namespace BlackBox {
     
     bool closePIGPIO();
 
-    int i2c_handle; 
-    
     int pigpio_server;
 
     class PinCallbackRec {

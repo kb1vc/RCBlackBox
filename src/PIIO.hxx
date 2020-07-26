@@ -34,13 +34,13 @@ namespace BlackBox {
     virtual bool setPWM(unsigned int pin, unsigned int duty_cycle) = 0;
 
     // i2c functions
-    virtual bool openI2C(unsigned int bus, unsigned int addr, unsigned int flags) = 0;
-    virtual bool closeI2C() = 0;
+    virtual int openI2C(unsigned int bus, unsigned int addr, unsigned int flags) = 0;
+    virtual bool closeI2C(int i2c_handle) = 0;
       
-    virtual int readRegI2C(unsigned char reg) = 0;
-    virtual int writeRegByteI2C(unsigned char reg, unsigned int val) = 0;
+    virtual int readRegI2C(int i2c_handle, unsigned char reg) = 0;
+    virtual int writeRegByteI2C(int i2c_handle, unsigned char reg, unsigned int val) = 0;
 	
-    virtual int readBlockI2C(unsigned char reg, int len, char * buf) = 0;
+    virtual int readBlockI2C(int i2c_handle, unsigned char reg, int len, char * buf) = 0;
   };
 }
 

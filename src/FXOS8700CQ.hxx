@@ -43,6 +43,7 @@ namespace BlackBox {
   protected:
 
     PIIO * piio_p; // pointer to gpio interface. 
+    int i2c_handle;
     
 #pragma pack(push, 1)
     // want this in a contiguous 12 byte block.

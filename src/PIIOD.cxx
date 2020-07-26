@@ -73,27 +73,27 @@ namespace BlackBox {
   }
 
   // i2c functions
-  bool PIIOD::openI2C(unsigned int bus, unsigned int addr, unsigned int flags) {
-    i2c_handle = i2c_open(pigpio_server, bus, addr, flags);
-    return i2c_handle >= 0;
+  int PIIOD::openI2C(unsigned int bus, unsigned int addr, unsigned int flags) {
+    int i2c_handle = i2c_open(pigpio_server, bus, addr, flags);
+    return i2c_handle;
   }
 
-  bool PIIOD::closeI2C() {
+  bool PIIOD::closeI2C(int i2c_handle) {
     if(i2c_handle >= 0) {
       return i2c_close(pigpio_server, i2c_handle) == 0;
     }
     return false; 
   }
       
-  int PIIOD::readRegI2C(unsigned char reg) {
+  int PIIOD::readRegI2C(int i2c_handle, unsigned char reg) {
     return i2c_read_byte_data(pigpio_server, i2c_handle, reg);
   }
   
-  int PIIOD::writeRegByteI2C(unsigned char reg, unsigned int val) {
+  int PIIOD::writeRegByteI2C(int i2c_handle, unsigned char reg, unsigned int val) {
     return i2c_write_byte_data(pigpio_server, i2c_handle, reg, val);
   }
 	
-  int PIIOD::readBlockI2C(unsigned char reg, int len, char * buf) {
+  int PIIOD::readBlockI2C(int i2c_handle, unsigned char reg, int len, char * buf) {
     return i2c_read_i2c_block_data(pigpio_server, i2c_handle, reg, buf, len);
   }
 

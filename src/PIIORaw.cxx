@@ -10,8 +10,9 @@ namespace BlackBox {
   bool PIIORaw::pigpio_has_been_initialized = false;
 
   bool PIIORaw::initPIGPIO() {
+    std::cerr << "initPIGPIO\n";
     if(pigpio_has_been_initialized) return true;
-
+    std::cerr << "\tInitializing PIGPIO\n";
     // two peoples separated by a common language. 
     int stat = gpioInitialise();
     
@@ -65,27 +66,28 @@ namespace BlackBox {
   }
 
   // i2c functions
-  bool PIIORaw::openI2C(unsigned int bus, unsigned int addr, unsigned int flags) {
-    i2c_handle = i2cOpen(bus, addr, flags);
-    return i2c_handle >= 0;
+  int PIIORaw::openI2C(unsigned int bus, unsigned int addr, unsigned int flags) {
+    int i2c_handle = i2cOpen(bus, addr, flags);
+    std::cerr << "OpenI2C returns " << i2c_handle << "\n";
+    return i2c_handle;
   }
 
-  bool PIIORaw::closeI2C() {
+  bool PIIORaw::closeI2C(int i2c_handle) {
     if(i2c_handle >= 0) {
       return i2cClose(i2c_handle) == 0;
     }
     return false; 
   }
       
-  int PIIORaw::readRegI2C(unsigned char reg) {
+  int PIIORaw::readRegI2C(int i2c_handle, unsigned char reg) {
     return i2cReadByteData(i2c_handle, reg);
   }
   
-  int PIIORaw::writeRegByteI2C(unsigned char reg, unsigned int val) {
+  int PIIORaw::writeRegByteI2C(int i2c_handle, unsigned char reg, unsigned int val) {
     return i2cWriteByteData(i2c_handle, reg, val);
   }
 	
-  int PIIORaw::readBlockI2C(unsigned char reg, int len, char * buf) {
+  int PIIORaw::readBlockI2C(int i2c_handle, unsigned char reg, int len, char * buf) {
     return i2cReadI2CBlockData(i2c_handle, reg, buf, len);
   }
 

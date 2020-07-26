@@ -27,13 +27,17 @@ namespace BlackBox {
 			 Mode mode) : piio_p(piio_p) {
     sequence_number = 0;
 
-    piio_p->openI2C(bus, addr, 0);
+    i2c_handle = piio_p->openI2C(bus, addr, 0);
+    if(i2c_handle < 0) {
+      throw std::runtime_error("FXAS21002C: Failed to open I2C.\n");      
+    }
+    
     
     init(mode, int1_pin);
   }
 
   FXOS8700CQ::~FXOS8700CQ() { 
-    piio_p->closeI2C();
+    piio_p->closeI2C(i2c_handle);
   }
 
 
@@ -56,15 +60,15 @@ namespace BlackBox {
   int FXOS8700CQ::readDR(ISData & raw) {
     // return 0 if we got nothing
     // first read the STATUS register.
-    unsigned int intsr = piio_p->readRegI2C(INT_SOURCE_RO);
+    unsigned int intsr = piio_p->readRegI2C(i2c_handle, INT_SOURCE_RO);
     std::cerr << "{" << intsr << "}";                
-    unsigned int stat = piio_p->readRegI2C(M_DR_STATUS_RO);
+    unsigned int stat = piio_p->readRegI2C(i2c_handle, M_DR_STATUS_RO);
     if(stat & DRS_ZYXDR) {
       // read the combined mag and acc registers, starting with M_OUT_X_MSB
       //      readBlock(M_OUT_X_MSB_RO, sizeof(ISData), (char*) &raw);
-      int sz = piio_p->readBlockI2C(OUT_X_MSB_RO, sizeof(ISData), (char*) &raw);
-      intsr = piio_p->readRegI2C(INT_SOURCE_RO);      
-      int drs = piio_p->readRegI2C(M_DR_STATUS_RO);
+      int sz = piio_p->readBlockI2C(i2c_handle, OUT_X_MSB_RO, sizeof(ISData), (char*) &raw);
+      intsr = piio_p->readRegI2C(i2c_handle, INT_SOURCE_RO);      
+      int drs = piio_p->readRegI2C(i2c_handle, M_DR_STATUS_RO);
       std::cerr << (std::hex) << "{" << stat << "/" << sz << "+" << intsr << "-" << drs << (std::dec) << "}";
       return 1; 
     }
@@ -95,28 +99,28 @@ namespace BlackBox {
   void FXOS8700CQ::init(Mode mode, unsigned char int1_pin) {
     // put the device to sleep
     std::cerr << "|";    
-    piio_p->writeRegByteI2C(CTRL_REG1_RW, 0);
+    piio_p->writeRegByteI2C(i2c_handle, CTRL_REG1_RW, 0);
     // reset the device
-    piio_p->writeRegByteI2C(CTRL_REG2_RW, CR2_RESET);
+    piio_p->writeRegByteI2C(i2c_handle, CTRL_REG2_RW, CR2_RESET);
     usleep(2000); // sleep for 2ms see page 45 of the datasheet
 
     // enable the accel and mag in hybrid mode
     // sample at 6.25 Hz
-    piio_p->writeRegByteI2C(M_CTRL_REG1_RW, MCR1_ACAL_ENA |  MCR1_HMS::BOTH | ((0x7 & MCR1_OSR_M) << MCR1_OSR_S));
+    piio_p->writeRegByteI2C(i2c_handle, M_CTRL_REG1_RW, MCR1_ACAL_ENA |  MCR1_HMS::BOTH | ((0x7 & MCR1_OSR_M) << MCR1_OSR_S));
 
     // couple the mag and acc registers in a block,
     // all others are default
-    piio_p->writeRegByteI2C(M_CTRL_REG2_RW, MCR2_HYB_AUTO_INC);
+    piio_p->writeRegByteI2C(i2c_handle, M_CTRL_REG2_RW, MCR2_HYB_AUTO_INC);
 
     // set acc to 2G full scale, no HPF
-    piio_p->writeRegByteI2C(XYZ_DATA_CFG_RW, XYZDC_FS_2G);
+    piio_p->writeRegByteI2C(i2c_handle, XYZ_DATA_CFG_RW, XYZDC_FS_2G);
 
 
     if(mode == DR_INT) {
       // interrupt from data ready...
-      piio_p->writeRegByteI2C(CTRL_REG3_RW, CR3_IPOL);
-      piio_p->writeRegByteI2C(CTRL_REG4_RW, CR4_INT_EN_DRDY);
-      piio_p->writeRegByteI2C(CTRL_REG5_RW, CR5_INT_CFG_DRDY);
+      piio_p->writeRegByteI2C(i2c_handle, CTRL_REG3_RW, CR3_IPOL);
+      piio_p->writeRegByteI2C(i2c_handle, CTRL_REG4_RW, CR4_INT_EN_DRDY);
+      piio_p->writeRegByteI2C(i2c_handle, CTRL_REG5_RW, CR5_INT_CFG_DRDY);
       piio_p->setISRCallBack(int1_pin, RISING_EDGE, 0, dReadyIntCallback, this);
     }
   }
@@ -139,6 +143,6 @@ namespace BlackBox {
   void FXOS8700CQ::start() {
     // turn on the accelerometer
     std::cerr << "@";
-    piio_p->writeRegByteI2C(CTRL_REG1_RW, (CR1_DATA_RATE_6r25 << CR1_DR_S) | CR1_LNOISE | CR1_ACTIVE);
+    piio_p->writeRegByteI2C(i2c_handle, CTRL_REG1_RW, (CR1_DATA_RATE_6r25 << CR1_DR_S) | CR1_LNOISE | CR1_ACTIVE);
   }
 }

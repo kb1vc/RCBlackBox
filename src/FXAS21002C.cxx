@@ -46,7 +46,10 @@ namespace BlackBox {
     // this will be adjusted by the various setup steps
     scale_factor = 1.0 / 32768.0; // set it to something...
 
-    piio_p->openI2C(bus, addr, 0);
+    i2c_handle = piio_p->openI2C(bus, addr, 0);
+    if(i2c_handle < 0) {
+      throw std::runtime_error("FXAS21002C: Failed to open I2C.\n");      
+    }
 
     init(mode, int1_pin);                
   }
@@ -55,7 +58,7 @@ namespace BlackBox {
   }
 
   void FXAS21002C::writeByte(unsigned char reg, unsigned char dat) {
-    int stat = piio_p->writeRegByteI2C(reg, dat); 
+    int stat = piio_p->writeRegByteI2C(i2c_handle, reg, dat); 
     
     if(stat != 0) {
       std::cerr << "Got i2cWriteByteData error: " << stat << "\n";
@@ -64,7 +67,7 @@ namespace BlackBox {
   }
 
   unsigned char FXAS21002C::readByte(unsigned char reg) {
-    int ret = piio_p->readRegI2C(reg); 
+    int ret = piio_p->readRegI2C(i2c_handle, reg); 
 
     if(ret < 0) {
       std::cerr << "Got i2cReadByteData error: " << ret << "\n";
@@ -80,7 +83,7 @@ namespace BlackBox {
     while(l) {
       int tl = (l > 30) ? 30 : l;
       l = l - tl;
-      bool stat = piio_p->readBlockI2C(reg, tl, bp);
+      bool stat = piio_p->readBlockI2C(i2c_handle, reg, tl, bp);
       if(!stat) {
 	std::cerr << "Got readBlock error: " << stat << "\n";
 	throw std::runtime_error("FXAS21002C: Failed to read block.\n");

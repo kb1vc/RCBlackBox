@@ -221,6 +221,7 @@ namespace BlackBox {
     PIIO * piio_p; 
     Mode mode;
     unsigned char int1_pin; 
+    int i2c_handle;
     
     static void fifoIntCallback(int gpio, int level, unsigned int tick, void * obj);
 
