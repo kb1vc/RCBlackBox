@@ -28,13 +28,11 @@ namespace BlackBox {
   
   void FXAS21002C::fifoIntCallback(int gpio, int level, unsigned int tick, void * obj) {
     FXAS21002C * gyro_p = (FXAS21002C *) obj;
-    std::cerr << "_";
     gyro_p->serviceFIFO(gpio, level, tick);
   }
 
   void FXAS21002C::dReadyIntCallback(int gpio, int level, unsigned int tick, void * obj) {
     FXAS21002C * gyro_p = (FXAS21002C *) obj; 
-    std::cerr << "@";
     gyro_p->serviceDReady(gpio, level, tick);
   }
   
@@ -172,7 +170,6 @@ namespace BlackBox {
       // data ready interrupt on int1 pin
       // active high, totem pole output.
       if(mode == DR_POLL) {
-	std::cerr << "***********############$$$$$$$$$$$$$$$\n";
 	writeByte(CTRL_REG2_RW, 
 			 CR2_INT_CFG_DRDY_I1 | CR2_INT_EN_DRDY | CR2_IPOL_HI);
       }
@@ -195,16 +192,13 @@ namespace BlackBox {
 
   void FXAS21002C::serviceFIFO(int gpio, int level, unsigned int tick) {
     // read the rates and store them in the outbound rate queue.
-    std::cerr << "%";    
     std::lock_guard<std::mutex> lck(gq_mutex);    
     int num_samps = readFIFO();
-    std::cerr << "F"; 
     // anything to push?
     if((num_samps > 0) && (gyro_rates.size() < GYRO_RATE_QUEUE_MAXLEN)) {
       // lock the queue
       for(int i = 0; i < num_samps; i++) {
 	Rates v;
-	std::cerr << "\\";    	
 	scaleBlock(rate_block[i], v);
 	v.seq_no = sequence_number++;
 	gyro_rates.push(v);
@@ -214,10 +208,8 @@ namespace BlackBox {
 
   void FXAS21002C::serviceDReady(int gpio, int level, unsigned int tick) {
     // read the rates and store them in the outbound rate queue.
-    std::cerr << "^";
     if(readDR(rate_block[0])) {
       // lock the queue
-      std::cerr << "$"; 
       std::lock_guard<std::mutex> lck(gq_mutex);
       Rates v;
       v.x = rate_block[0].x;
@@ -225,7 +217,6 @@ namespace BlackBox {
       v.z = rate_block[0].z;
       v.seq_no = sequence_number++; 
       if(gyro_rates.size() < GYRO_RATE_QUEUE_MAXLEN) {
-	std::cerr << "=";
 	gyro_rates.push(v);
       }
     }
