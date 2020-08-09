@@ -12,6 +12,9 @@ namespace BlackBox {
   bool PIIORaw::initPIGPIO() {
     std::cerr << "initPIGPIO\n";
     if(pigpio_has_been_initialized) return true;
+    
+    // disable the network interfaces
+    gpioCfgInterfaces(PI_DISABLE_SOCK_IF);
     std::cerr << "\tInitializing PIGPIO\n";
     // two peoples separated by a common language. 
     int stat = gpioInitialise();

@@ -3,7 +3,8 @@
 #include <iostream>
 #include <unistd.h>
 #include "FDR.hxx"
-
+#include <linux/reboot.h>
+#include <sys/reboot.h>
 
 int main(int argc, char * argv[]) {
   // create a connection. We're going to use
@@ -19,4 +20,11 @@ int main(int argc, char * argv[]) {
   fdr.openLog("FDR_");
   
   fdr.run();
+
+  // once we get here, it is time to shutdown (only if ARGV[1] is "SHUTDOWN" (note caps).
+  if((argc > 1) && (std::string(argv[1]) == "SHUTDOWN")) {
+    std::cerr << "Shutting down.\n";
+    sync();
+    reboot(LINUX_REBOOT_CMD_POWER_OFF);
+  }
 }
