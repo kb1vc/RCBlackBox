@@ -24,6 +24,8 @@ int main(int argc, char * argv[]) {
   // once we get here, it is time to shutdown (only if ARGV[1] is "SHUTDOWN" (note caps).
   if((argc > 1) && (std::string(argv[1]) == "SHUTDOWN")) {
     std::cerr << "Shutting down.\n";
+    std::cout.flush();
+    std::cerr.flush();
     sync();
     reboot(LINUX_REBOOT_CMD_POWER_OFF);
   }

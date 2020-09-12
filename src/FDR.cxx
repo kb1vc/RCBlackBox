@@ -121,7 +121,10 @@ namespace BlackBox {
     log_stream << "FMT TS sec msec\n";
     BlackBox::MXData::printFormat(log_stream);
     BlackBox::Rates::printFormat(log_stream);
-    
+
+    std::cout << "Opening video file [" << video_fname << "]\n";
+    std::cout << "Opening log file [" << fname << "]\n";
+    std::cout.flush();
     return log_stream;
   }
 
