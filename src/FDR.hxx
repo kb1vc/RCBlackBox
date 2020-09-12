@@ -14,7 +14,7 @@ namespace BlackBox {
   
   class FDR {
   public:
-    FDR(bool use_piio_server);
+    FDR(bool use_piio_server, bool use_camera, bool use_gyro);
 
     std::ostream & openLog(const std::string & fname);
 

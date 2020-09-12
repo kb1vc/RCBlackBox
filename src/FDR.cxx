@@ -18,7 +18,7 @@
 // Flight Data Recorder based on FXAS21002C (gyro, accelerometer) and FXOS8700CQ (compass)
 
 namespace BlackBox { 
-  FDR::FDR(bool use_piio_server) {
+  FDR::FDR(bool use_piio_server, bool use_camera, bool use_gyro) {
     if(use_piio_server) {
       std::cerr << "Creating pigpio client\n";
       piio_p = new BlackBox::PIIOD;
@@ -28,13 +28,20 @@ namespace BlackBox {
       piio_p = new BlackBox::PIIORaw; 
     }
 
-  
-    // setup the gyro device. 
-    gyro_p = new BlackBox::FXAS21002C(piio_p, 1, 0x21, 4, BlackBox::FXAS21002C::FIFO);
-    std::cerr << "Created gyro\n";
 
-    compass_p = new BlackBox::FXOS8700CQ(piio_p, 1, 0x1f, 17, BlackBox::FXOS8700CQ::DR_INT);
-    std::cerr << "Created compass\n";
+    if(use_gyro) {    
+      // setup the gyro device.
+
+      gyro_p = new BlackBox::FXAS21002C(piio_p, 1, 0x21, 4, BlackBox::FXAS21002C::FIFO);
+      std::cerr << "Created gyro\n";
+
+      compass_p = new BlackBox::FXOS8700CQ(piio_p, 1, 0x1f, 17, BlackBox::FXOS8700CQ::DR_INT);
+      std::cerr << "Created compass\n";
+    }
+    else {
+      gyro_p = NULL;
+      compass_p = NULL; 
+    }
 
     const int sw_pin = 14;
     const int led_pin = 15;  
@@ -44,8 +51,13 @@ namespace BlackBox {
     // turn off the lamp.
     led_p->off();
 
-    // start the video process.
-    video_p = new BlackBox::Video();
+    if(use_camera) {
+      // start the video process.
+      video_p = new BlackBox::Video();
+    }
+    else {
+      video_p = NULL; 
+    }
   }
 
 
@@ -61,41 +73,49 @@ namespace BlackBox {
     led_p->blink(true);
 
     // start the gyro
-    gyro_p->start(BlackBox::FXAS21002C::CR1_DATA_RATE_25);
+    if(gyro_p != NULL) {
+      gyro_p->start(BlackBox::FXAS21002C::CR1_DATA_RATE_25);
+      std::cerr << "Started gyro\n";    
+    }
     // start the compass
-    compass_p->start();
-    std::cerr << "Started gyro and compass\n";
+    if(compass_p != NULL) {
+      compass_p->start();
+      std::cerr << "Started compass\n";
+    }
   
   
     BlackBox::Rates rates[256];
     BlackBox::MXData bearings[256];
 
-    video_p->openVidFile(video_fname);
+    if(video_p != NULL) {
+      video_p->openVidFile(video_fname);
 
-    // start the video
-    video_p->start();
-    
+      // start the video
+      video_p->start();
+    }
     // loop
     while(sw_p->getState()) {
-      // wait for gyro buffer
-      int num_rates = gyro_p->getRates(256, rates);
-      // read compass buffer if available
-      int num_bearings = compass_p->getMX(256, bearings);
+      if((gyro_p != NULL) && (compass_p != NULL)) {
+	// wait for gyro buffer
+	int num_rates = gyro_p->getRates(256, rates);
+	// read compass buffer if available
+	int num_bearings = compass_p->getMX(256, bearings);
 
-      // print the records. 
-      if((num_rates | num_bearings) != 0) {
-	// time stamp
-	log_stream << getTimeStamp() << "\n";
-	// write records.      
-	for(int i = 0; i < num_rates; i++) {
-	  rates[i].print(log_stream);
-	}
-	for(int i = 0; i < num_bearings; i++) {
-	  bearings[i].print(log_stream);
-	}
+	// print the records. 
+	if((num_rates | num_bearings) != 0) {
+	  // time stamp
+	  log_stream << getTimeStamp() << "\n";
+	  // write records.      
+	  for(int i = 0; i < num_rates; i++) {
+	    rates[i].print(log_stream);
+	  }
+	  for(int i = 0; i < num_bearings; i++) {
+	    bearings[i].print(log_stream);
+	  }
 
-	// sync files
-	log_stream.flush();
+	  // sync files
+	  log_stream.flush();
+	}
       }
     }
 
@@ -105,12 +125,16 @@ namespace BlackBox {
     // turn off the lamp
     led_p->off();
 
-    // stop the video
-    video_p->stop();
+    if(video_p != NULL) {
+      // stop the video
+      video_p->stop();
+    }
 
-    // stop the gyro and compass
-    gyro_p->stop();
-    compass_p->stop();
+    if((gyro_p!= NULL) && (compass_p != NULL)) {
+      // stop the gyro and compass
+      gyro_p->stop();
+      compass_p->stop();
+    }
   }
 
   std::ostream & FDR::openLog(const std::string & basename) {
