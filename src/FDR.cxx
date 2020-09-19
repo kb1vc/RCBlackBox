@@ -32,10 +32,14 @@ namespace BlackBox {
     if(use_gyro) {    
       // setup the gyro device.
 
-      gyro_p = new BlackBox::FXAS21002C(piio_p, 1, 0x21, 4, BlackBox::FXAS21002C::FIFO);
+      gyro_p = new BlackBox::FXAS21002C(piio_p, 1, 
+					GYRO_I2C_ADDR, GYRO_INT_PIN, 
+					BlackBox::FXAS21002C::FIFO);
       std::cerr << "Created gyro\n";
 
-      compass_p = new BlackBox::FXOS8700CQ(piio_p, 1, 0x1f, 17, BlackBox::FXOS8700CQ::DR_INT);
+      compass_p = new BlackBox::FXOS8700CQ(piio_p, 1, 
+					   COMPASS_I2C_ADDR, COMPASS_INT_PIN, 
+					   BlackBox::FXOS8700CQ::DR_INT);
       std::cerr << "Created compass\n";
     }
     else {
@@ -43,10 +47,8 @@ namespace BlackBox {
       compass_p = NULL; 
     }
 
-    const int sw_pin = 14;
-    const int led_pin = 15;  
-    sw_p = new BlackBox::Switch(piio_p, sw_pin, 50000);
-    led_p = new BlackBox::Lamp(piio_p, led_pin, 8);
+    sw_p = new BlackBox::Switch(piio_p, SWITCH_IN_PIN, 50000);
+    led_p = new BlackBox::Lamp(piio_p, LED_OUT_PIN, 8);
     
     // turn off the lamp.
     led_p->off();

@@ -27,6 +27,12 @@ namespace BlackBox {
 
     std::string getTimeDate();
 
+    const int GYRO_INT_PIN = 4;
+    const int GYRO_I2C_ADDR = 0x21;
+    const int COMPASS_INT_PIN = 23;
+    const int COMPASS_I2C_ADDR = 0x1f;
+    const int LED_OUT_PIN = 27;
+    const int SWITCH_IN_PIN = 22;
     
     BlackBox::PIIO * piio_p;
   
