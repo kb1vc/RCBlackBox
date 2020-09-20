@@ -15,20 +15,28 @@ OuterHeight = InnerHeight + 2 * WallThickness;
 
 MountHoleOffsetW = 0.025 + WallThickness;
 MountHoleOffsetL = 0.25 + WallThickness;
-ConnSideWallL = 1.35;
+ConnSlotL = 1.0;
+ConnSlotOffset = 0.45;
+ConnSlotHeight = 0.2; 
 
 LEDHoleX = 1.075;
 LEDHoleY = OuterWidth - 1;
 
-PlugHoleX = 0.775;
+PlugHoleX = 0.675;
 PlugHoleY = LEDHoleY;
 PlugHoleL = 0.4;
-PlugHoleW = 0.2;
+PlugHoleW = 0.3;
 
 PedestalHeight = 0.2;
 PinHeight = PedestalHeight + 0.15;
 PinDia = 0.08;
 PedestalDia = 0.2;
+
+PigTailWidth = 0.125;
+PigTailHeight = OuterHeight * 0.5;
+PigTailY = OuterWidth * 0.5;
+
+
 
 // dimensions in mm for a little while
 mm_pinL = 58.0;
@@ -100,6 +108,17 @@ module PlugSlot() {
      cube([PlugHoleW, PlugHoleL, 1], center=true);
 }
 
+module ConnSlot() {
+   translate([WallThickness + ConnSlotOffset, -Epsilon, OuterHeight - ConnSlotHeight])
+     cube([ConnSlotL, 2 * WallThickness, ConnSlotHeight*2]);
+}
+
+module PigTailSlot() {
+   translate([OuterLength - (WallThickness + Epsilon), PigTailY, OuterHeight + Epsilon - PigTailHeight])
+     cube([WallThickness * 2, PigTailWidth, PigTailHeight]);
+}
+
+
 scale([25.4,25.4,25.4]) {
   difference() {
      union() {
@@ -111,7 +130,10 @@ scale([25.4,25.4,25.4]) {
          cube([10*WallThickness, CameraWid, CameraWid]);
 
        LEDSlot();
-       PlugSlot();       
+       PlugSlot();
+
+       ConnSlot();
+       PigTailSlot();
      }
    }
  }

@@ -14,7 +14,9 @@ OuterHeight = InnerHeight + 2 * WallThickness;
 
 MountHoleOffsetW = 0.025 + WallThickness;
 MountHoleOffsetL = 0.25 + WallThickness;
-ConnSideWallL = 1.35;
+ConnSideWallL = 1.0;
+ConnSideWallOffset = 0.45;
+ConnSideWallLift = 0.15;
 
 PedestalHeight = 0.17;
 PinHeight = PedestalHeight + 0.2;
@@ -39,15 +41,6 @@ SlotStartL = InnerLength * 0.15;
 SlotL = InnerLength * 0.75;
 
 SlotStartW = 0.7;
-
-GyroBracePosW = OuterWidth - 0.3;
-GyroBracePosL = 1.;
-GyroBraceL = 1.0;
-module GyroBrace() {
-  translate([GyroBracePosL, GyroBracePosW, 0])
-    cube([GyroBraceL, WallThickness, InnerHeight]);
-}
-
 
 
 module Pedestal(dir) {
@@ -84,7 +77,7 @@ module Walls() {
     cube([OuterLength, OuterWidth, OuterHeight]);
     union() {
       translate([WallThickness, WallThickness, WallThickness * 0.9]) cube([InnerLength, InnerWidth, OuterHeight]);
-      translate([WallThickness, 5 * WallThickness, WallThickness * 0.9])
+      translate([WallThickness + ConnSideWallOffset, 5 * WallThickness, ConnSideWallLift])
         cube([ConnSideWallL, InnerWidth, OuterHeight]);
     }
   }
