@@ -4,7 +4,7 @@ $fn=32; // round things are drawn in 32 segments
 
 // dimensions in inches
 WallThickness = 0.075;
-InnerWidth = 1.625;
+InnerWidth = 1.25;
 InnerLength = 3.0;
 OuterWidth = InnerWidth + 2 * WallThickness;
 OuterLength = InnerLength + 2 * WallThickness;
@@ -17,9 +17,9 @@ MountHoleOffsetL = 0.25 + WallThickness;
 ConnSideWallL = 1.35;
 
 PedestalHeight = 0.17;
-PinHeight = PedestalHeight + 0.15;
+PinHeight = PedestalHeight + 0.2;
 
-PinDia = 0.072; 
+PinDia = 0.065; 
 PedestalDia = 0.225;
 
 // dimensions in mm for a little while
@@ -33,13 +33,6 @@ PinSpaceW = mm_pinW / 25.4;
 PinLocRL = (mm_pinOffL / 25.4) + MountHoleOffsetL;
 PinLocRW = (mm_pinOffW / 25.4) + MountHoleOffsetW;
 
-SwitchL = 2.7;
-SwitchW = 1.5;
-LED_L = 2.2;
-LED_W = 1.5;
-
-SwitchDia = 0.2625;
-LED_Dia = 0.22;
 
 SlotW = 0.5;
 SlotStartL = InnerLength * 0.15;
@@ -97,12 +90,6 @@ module Walls() {
   }
 }
 
-module SwitchLED() {
-    translate([SwitchL, SwitchW, -5 * WallThickness])
-      cylinder(d=SwitchDia, h = 10 * WallThickness);
-    translate([LED_L, LED_W, -5 * WallThickness])
-      cylinder(d=LED_Dia, h = 10 * WallThickness);
-}
 
 module BasePlate() {
   union() {
@@ -116,10 +103,8 @@ scale([25.4,25.4,25.4]) {
     union() {
       BasePlate();
       Walls();
-      GyroBrace();
     }
     union() {
-      SwitchLED();
       ReliefSlots();
     }
   }
