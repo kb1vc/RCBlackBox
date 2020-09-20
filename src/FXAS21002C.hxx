@@ -2,20 +2,25 @@
 
 #include <mutex>
 #include <queue>
-#include "FXBase.hxx"
+#include <iostream>
 
 namespace BlackBox {
 
+  class PIIO;
+  
 #pragma pack(push, 1)    
   // This version of the Rate struct contains a sequence
   // number as well as the gyro rates.
   struct Rates {
-    short x, y, z; 
+    float x, y, z; 
     unsigned short seq_no; 
+
+    std::ostream & print(std::ostream & os);
+    static std::ostream & printFormat(std::ostream & os);
   };
 #pragma pack(pop)    
   
-  class FXAS21002C : public FXBase { 
+  class FXAS21002C {
   public:
     enum Mode { FIFO, DR_INT, DR_POLL };    
     
@@ -26,15 +31,15 @@ namespace BlackBox {
      * @param int1_pin first of two int pins from the chip
      * @param int2_pin second of two int pins from the chip
      */
-    FXAS21002C(unsigned char bus, unsigned char addr,
+    FXAS21002C(PIIO * piio_p, unsigned char bus, unsigned char addr,
 	       unsigned char int1_pin, 
 	       Mode mode);
     
     ~FXAS21002C();
 
-
-
     int getRates(int max_samples, Rates * samps);
+
+    void stop() { }
     
   protected:
 
@@ -47,7 +52,13 @@ namespace BlackBox {
       unsigned short x, y, z;
     }; 
 #pragma pack(pop)
+
+    short swapEnds(unsigned short v);
     
+    float scale_factor; // in degrees/second per count
+    
+    void scaleBlock(const IRates & irate, Rates & out); 
+
     std::queue<Rates> gyro_rates;
     IRates rate_block[256];
     unsigned short sequence_number;
@@ -207,6 +218,11 @@ namespace BlackBox {
     void start(CR1_DATA_RATE data_rate);
 
   protected:
+    PIIO * piio_p; 
+    Mode mode;
+    unsigned char int1_pin; 
+    int i2c_handle;
+    
     static void fifoIntCallback(int gpio, int level, unsigned int tick, void * obj);
 
     static void dReadyIntCallback(int gpio, int level, unsigned int tick, void * obj);

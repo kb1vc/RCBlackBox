@@ -1,0 +1,9 @@
+Connections between Pi, 9DOF sensor, and Switch
+
+Switch GPIO 22 to switch to ground 
+
+LED Pin GPIO 27 to resistor to LED to ground
+
+9DOF sensor -- SDA, SCL, 3.3V, GND. 
+FXAS21002C interrupt to GPIO 4
+FXOS8700CW interrupt to GPIO 23

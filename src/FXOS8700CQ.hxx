@@ -2,19 +2,24 @@
 
 #include <mutex>
 #include <queue>
-#include "FXBase.hxx"
+#include <iostream>
 
 namespace BlackBox {
-
+  class PIIO; 
+  
   // this is the byte-order corrected signed
   // measured data, magnetometer, and accelerometer
   struct MXData {
     short ax, ay, az;    
     short mx, my, mz;
     int seq_no;
+
+    static std::ostream & printFormat(std::ostream & os);
+    
+    std::ostream & print(std::ostream & os);
   };
   
-  class FXOS8700CQ : public FXBase { 
+  class FXOS8700CQ {
   public:
     enum Mode { DR_INT, DR_POLL };    
     
@@ -25,7 +30,7 @@ namespace BlackBox {
      * @param int1_pin first of two int pins from the chip
      * @param int2_pin second of two int pins from the chip
      */
-    FXOS8700CQ(unsigned char bus, unsigned char addr,
+    FXOS8700CQ(PIIO * piio_p, unsigned char bus, unsigned char addr,
 	       unsigned char int1_pin, 
 	       Mode mode);
     
@@ -33,8 +38,13 @@ namespace BlackBox {
 
     int getMX(int max_samps, MXData * dat_p);
     
+    void stop() { }
     
   protected:
+
+    PIIO * piio_p; // pointer to gpio interface. 
+    int i2c_handle;
+    
 #pragma pack(push, 1)
     // want this in a contiguous 12 byte block.
     // This is the structure that mimics the layout of the
@@ -382,6 +392,7 @@ namespace BlackBox {
     static const unsigned char MCR3_ASLP_OS_S = 4;
     static const unsigned char MCR3_THS_XYZ_UPDATE = 0x8;
 
+    
     static const unsigned char M_INT_SRC_RO = 0x5e;
     static const unsigned char MIS_THS = 0x4;
     static const unsigned char MIS_VECM = 0x2;

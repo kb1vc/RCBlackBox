@@ -2,10 +2,13 @@
 #include <iostream>
 #include <unistd.h>
 #include <boost/format.hpp>
+#include "PIIORaw.hxx"
+#include "PIIOD.hxx"
+
 void doPoll(BlackBox::FXOS8700CQ & comp) {
   BlackBox::MXData dat;
 
-  for(int i = 0; i < 2000; ) {
+  for(int i = 0; i < 200; ) {
     int nummx = comp.readDR(dat);
     if(nummx) {
       std::cout << boost::format("%4d: %2d %4d M: [%04x %04x %04x] A: [%04x %04x %04x]   M: [%4d %4d %4d] A: [%4d %4d %4d]\n")
@@ -22,7 +25,7 @@ void doPoll(BlackBox::FXOS8700CQ & comp) {
 void doInt(BlackBox::FXOS8700CQ & comp) {
   BlackBox::MXData dat[256];
 
-  for(int i = 0; i < 2000; ) {
+  for(int i = 0; i < 200; ) {
     int nummx = comp.getMX(256, dat);
     for(int j = 0; j < nummx; j++) {
       std::cout << std::dec << i++ << " "
@@ -36,14 +39,30 @@ void doInt(BlackBox::FXOS8700CQ & comp) {
 }
 
 
-int main() {
+int main(int argc, char ** argv) {
   // create a connection. We're going to use
   // GPIO 17 for the mag/acc interrupt
+  BlackBox::PIIO * piio_p; 
+  
+  if((argc > 1) && (argv[1][0] == 'd')) {
+    piio_p = new BlackBox::PIIOD;
+  }
+  else {
+    piio_p = new BlackBox::PIIORaw; 
+  }
 
-  BlackBox::FXOS8700CQ comp(1, 0x1F, 17, BlackBox::FXOS8700CQ::DR_POLL);
-  //BlackBox::FXOS8700CQ comp(1, 0x1F, 17, BlackBox::FXOS8700CQ::DR_INT);  
+  if(0) {
+    BlackBox::FXOS8700CQ comp(piio_p, 1, 0x1F, 17, BlackBox::FXOS8700CQ::DR_POLL);
+    comp.start();    
+    doPoll(comp);
+  }
+  else {
+    BlackBox::FXOS8700CQ comp(piio_p, 1, 0x1F, 17, BlackBox::FXOS8700CQ::DR_INT);
+    comp.start();
+    doInt(comp);
+  }
+  // BlackBox::PIIOD piio;  
 
-  comp.start();
-  doPoll(comp);
-  // doInt(comp);
+
+
 }

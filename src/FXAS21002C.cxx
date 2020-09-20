@@ -1,7 +1,7 @@
 #include "FXAS21002C.hxx"
 #include <pigpio.h>
 #include <stdexcept>
-#include "PI_IO.hxx"
+#include "PIIO.hxx"
 #include <iostream>
 #include <mutex>
 
@@ -15,37 +15,48 @@ namespace BlackBox {
     std::cerr << "\n";
   }
 
+  std::ostream & Rates::print(std::ostream & os) {
+    os << "GY " << seq_no << " "
+       << x << " " << y << " " << z << "\n";
+    return os; 
+  }
 
+  std::ostream & Rates::printFormat(std::ostream & os) {
+    os << "FMT GY sequence_num xrot yrot zrot\n";
+    return os; 
+  }
+  
   void FXAS21002C::fifoIntCallback(int gpio, int level, unsigned int tick, void * obj) {
-    FXAS21002C * gyro_p = (FXAS21002C *) obj; 
-
+    FXAS21002C * gyro_p = (FXAS21002C *) obj;
     gyro_p->serviceFIFO(gpio, level, tick);
   }
 
   void FXAS21002C::dReadyIntCallback(int gpio, int level, unsigned int tick, void * obj) {
     FXAS21002C * gyro_p = (FXAS21002C *) obj; 
-
     gyro_p->serviceDReady(gpio, level, tick);
   }
   
-  FXAS21002C::FXAS21002C(unsigned char bus, unsigned char addr, 
+  FXAS21002C::FXAS21002C(PIIO * piio_p, unsigned char bus, unsigned char addr, 
 			 unsigned char int1_pin,
-			 Mode mode) : FXBase(bus, addr) {
-
+			 Mode mode) : piio_p(piio_p), mode(mode), int1_pin(int1_pin) {
     sequence_number = 0;
     
-    init(mode, int1_pin);
+    // this will be adjusted by the various setup steps
+    scale_factor = 1.0 / 32768.0; // set it to something...
+
+    i2c_handle = piio_p->openI2C(bus, addr, 0);
+    if(i2c_handle < 0) {
+      throw std::runtime_error("FXAS21002C: Failed to open I2C.\n");      
+    }
+
+    init(mode, int1_pin);                
   }
 
   FXAS21002C::~FXAS21002C() {
-    i2cClose(i2c_handle);
   }
 
   void FXAS21002C::writeByte(unsigned char reg, unsigned char dat) {
-    std::cerr << "Writing i2c byte  handle = " << i2c_handle 
-	      << "reg = " << std::hex
-	      << ((unsigned int) reg) << " " << ((unsigned int) dat) << std::dec << "\n";
-    int stat = i2cWriteByteData(i2c_handle, reg, dat); 
+    int stat = piio_p->writeRegByteI2C(i2c_handle, reg, dat); 
     
     if(stat != 0) {
       std::cerr << "Got i2cWriteByteData error: " << stat << "\n";
@@ -54,7 +65,7 @@ namespace BlackBox {
   }
 
   unsigned char FXAS21002C::readByte(unsigned char reg) {
-    int ret = i2cReadByteData(i2c_handle, reg); 
+    int ret = piio_p->readRegI2C(i2c_handle, reg); 
 
     if(ret < 0) {
       std::cerr << "Got i2cReadByteData error: " << ret << "\n";
@@ -70,9 +81,9 @@ namespace BlackBox {
     while(l) {
       int tl = (l > 30) ? 30 : l;
       l = l - tl;
-      int stat = i2cReadI2CBlockData(i2c_handle, reg, bp, tl); 
-      if(stat < 0) {
-	std::cerr << "Got i2cReadI2CBlockData error: " << stat << "\n";
+      bool stat = piio_p->readBlockI2C(i2c_handle, reg, tl, bp);
+      if(!stat) {
+	std::cerr << "Got readBlock error: " << stat << "\n";
 	throw std::runtime_error("FXAS21002C: Failed to read block.\n");
       }
       bp += tl;      
@@ -131,8 +142,9 @@ namespace BlackBox {
       // and set the watermark at 16 -- once we have this many samples, we
       // will get an interrupt on pin 1.
       writeByte(F_SETUP_RW, FS_MODE_STOP | (FS_WMRK_M & 16));
-      // LPF at 8 Hz, limit range to about 3 RPS
-      writeByte(CTRL_REG0_RW, CR0_LPF_M | CR0_HPF_3 | CR0_HPF_EN | CR0_RANGE_1000);
+      // LPF at 8 Hz, limit range to about 3 RPS?
+      writeByte(CTRL_REG0_RW, CR0_LPF_L | CR0_HPF_3 | CR0_HPF_EN | CR0_RANGE_500);
+      scale_factor = 500.0 / 32768.0;  // because we chose the range as 500...
       
       // FIFO interrupt on int1 pin
       // active high, totem pole output.
@@ -143,10 +155,13 @@ namespace BlackBox {
       writeByte(CTRL_REG3_RW, CR3_WRAPTOONE); 
 
       // connect the ISR
-      int stat = gpioSetISRFuncEx(int1_pin, RISING_EDGE, 0, fifoIntCallback, this);
+      piio_p->setMode(int1_pin, PI_INPUT);
+      std::cerr << "SET FIFO INT CALLBACK\n";
+      int stat = piio_p->setISRCallBack(int1_pin, RISING_EDGE, 0, fifoIntCallback, this);
     }
     else {  // mode must be DR_INT or DR_POLL
       // disable the fifo
+      std::cerr << "SET POLL\n";      
       writeByte(F_SETUP_RW, 0);
       // LPF at 8 Hz, limit range to about 3 RPM
       writeByte(CTRL_REG0_RW, CR0_LPF_H | CR0_RANGE_1000);
@@ -165,7 +180,8 @@ namespace BlackBox {
       // at once. 
       writeByte(CTRL_REG3_RW, 0);
 
-      int stat = gpioSetISRFuncEx(int1_pin, RISING_EDGE, 0, dReadyIntCallback, this);      
+      piio_p->setMode(int1_pin, PI_INPUT);
+      int stat = piio_p->setISRCallBack(int1_pin, RISING_EDGE, 0, dReadyIntCallback, this);      
     }
 
     // disable rate threshold    
@@ -174,17 +190,15 @@ namespace BlackBox {
   }
 
   void FXAS21002C::serviceFIFO(int gpio, int level, unsigned int tick) {
-    // read the rates and store them in the outbound rate queue. 
+    // read the rates and store them in the outbound rate queue.
+    std::lock_guard<std::mutex> lck(gq_mutex);    
     int num_samps = readFIFO();
     // anything to push?
     if((num_samps > 0) && (gyro_rates.size() < GYRO_RATE_QUEUE_MAXLEN)) {
       // lock the queue
-      std::lock_guard<std::mutex> lck(gq_mutex);
       for(int i = 0; i < num_samps; i++) {
 	Rates v;
-	v.x = rate_block[i].x;
-	v.y = rate_block[i].y;
-	v.z = rate_block[i].z;
+	scaleBlock(rate_block[i], v);
 	v.seq_no = sequence_number++;
 	gyro_rates.push(v);
       }
@@ -192,7 +206,7 @@ namespace BlackBox {
   }
 
   void FXAS21002C::serviceDReady(int gpio, int level, unsigned int tick) {
-    // read the rates and store them in the outbound rate queue. 
+    // read the rates and store them in the outbound rate queue.
     if(readDR(rate_block[0])) {
       // lock the queue
       std::lock_guard<std::mutex> lck(gq_mutex);
@@ -211,8 +225,10 @@ namespace BlackBox {
     int rv = 0;
     {
       std::lock_guard<std::mutex> lck(gq_mutex);
-      if(!gyro_rates.empty()) {
-	for(int i = 0; i < gyro_rates.size(); i++) {
+      int sa = gyro_rates.size();
+      if(sa > 0) {
+	int lim = (sa > max_samples) ? max_samples : sa;
+	for(int i = 0; i < lim; i++) {
 	  samps[i] = gyro_rates.front();
 	  gyro_rates.pop();
 	  rv++;
@@ -221,4 +237,19 @@ namespace BlackBox {
     }
     return rv;
   }
+
+  short FXAS21002C::swapEnds(unsigned short v)  {
+    short ret;
+
+    ret = ((v & 0xff) << 8) | ((v >> 8) & 0xff);
+    
+    return ret; 
+  }
+  
+  void FXAS21002C::scaleBlock(const IRates & irate, Rates & out) {
+    out.x = ((float) swapEnds(irate.x)) * scale_factor;
+    out.y = ((float) swapEnds(irate.y)) * scale_factor;
+    out.z = ((float) swapEnds(irate.z)) * scale_factor;      
+  }
 }
+
