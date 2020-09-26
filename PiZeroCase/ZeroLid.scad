@@ -1,25 +1,42 @@
 // Battery retainer for FT power pods.
 
 $fn=32; // round things are drawn in 32 segments
+Epsilon = 0.001;
 
 // dimensions in inches
 WallThickness = 0.075;
-InnerWidth = 1.625;
+InnerWidth = 1.25;
 InnerLength = 3.0;
 OuterWidth = InnerWidth + 2 * WallThickness;
 OuterLength = InnerLength + 2 * WallThickness;
-InnerHeight = 0.45 + 0.2 + 0.08;
+InnerHeight = 1.25 - (0.3 + WallThickness);
 
 OuterHeight = InnerHeight + 2 * WallThickness;
 
 MountHoleOffsetW = 0.025 + WallThickness;
 MountHoleOffsetL = 0.25 + WallThickness;
-ConnSideWallL = 1.35;
+ConnSlotL = 1.0;
+ConnSlotOffset = 0.45;
+ConnSlotHeight = 0.2; 
+
+LEDHoleX = 1.075;
+LEDHoleY = OuterWidth - 1;
+
+PlugHoleX = 0.675;
+PlugHoleY = LEDHoleY;
+PlugHoleL = 0.4;
+PlugHoleW = 0.3;
 
 PedestalHeight = 0.2;
 PinHeight = PedestalHeight + 0.15;
 PinDia = 0.08;
 PedestalDia = 0.2;
+
+PigTailWidth = 0.125;
+PigTailHeight = OuterHeight * 0.5;
+PigTailY = OuterWidth * 0.5;
+
+
 
 // dimensions in mm for a little while
 mm_pinL = 58.0;
@@ -80,6 +97,28 @@ module TopSlot() {
   translate([0, WallThickness, -0.01]) cube([0.3, InnerWidth, WallThickness + 0.02]);
 }
 
+
+module LEDSlot() {
+   translate([LEDHoleX, LEDHoleY, -Epsilon])
+     cylinder(d=LED_Dia, h = 1, center=true);
+}
+
+module PlugSlot() {
+   translate([PlugHoleX, PlugHoleY, -Epsilon])
+     cube([PlugHoleW, PlugHoleL, 1], center=true);
+}
+
+module ConnSlot() {
+   translate([WallThickness + ConnSlotOffset, -Epsilon, OuterHeight - ConnSlotHeight])
+     cube([ConnSlotL, 2 * WallThickness, ConnSlotHeight*2]);
+}
+
+module PigTailSlot() {
+   translate([OuterLength - (WallThickness + Epsilon), PigTailY, OuterHeight + Epsilon - PigTailHeight])
+     cube([WallThickness * 2, PigTailWidth, PigTailHeight]);
+}
+
+
 scale([25.4,25.4,25.4]) {
   difference() {
      union() {
@@ -89,10 +128,12 @@ scale([25.4,25.4,25.4]) {
      union() {
        translate([-2*WallThickness, OuterWidth - (CameraSlotL + CameraWid), OuterHeight - CameraWid + 0.01])
          cube([10*WallThickness, CameraWid, CameraWid]);
-         for(i = [0:1:5]) {
-           translate([WallThickness * 3 + i * 0.5, 0, 0])
-  	     TopSlot();
-	 }
+
+       LEDSlot();
+       PlugSlot();
+
+       ConnSlot();
+       PigTailSlot();
      }
    }
  }
