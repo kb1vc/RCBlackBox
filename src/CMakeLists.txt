@@ -24,15 +24,15 @@ add_library(pifdr_lib ${PIFDR_LIB_SRCS})
 target_include_directories(pifdr_lib PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 
-add_executable(FG FXAS_Test.cxx)
+add_executable(FXAS_Test FXAS_Test.cxx)
 
-target_include_directories(FG PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${pigpio_INCLUDE_DIRS})
-target_link_libraries(FG LINK_PUBLIC pifdr_lib ${pigpio_LIBRARY} ${pigpiod_if2_LIBRARY})
+target_include_directories(FXAS_Test PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${pigpio_INCLUDE_DIRS})
+target_link_libraries(FXAS_Test LINK_PUBLIC pifdr_lib ${pigpio_LIBRARY} ${pigpiod_if2_LIBRARY})
 
-add_executable(FC FXOS_Test.cxx)
+add_executable(FXOS_Test FXOS_Test.cxx)
 
-target_include_directories(FC PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${pigpio_INCLUDE_DIRS})
-target_link_libraries(FC LINK_PUBLIC pifdr_lib ${pigpio_LIBRARY} ${pigpiod_if2_LIBRARY})
+target_include_directories(FXOS_Test PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${pigpio_INCLUDE_DIRS})
+target_link_libraries(FXOS_Test LINK_PUBLIC pifdr_lib ${pigpio_LIBRARY} ${pigpiod_if2_LIBRARY})
 
 
 add_executable(SW SW_Test.cxx)

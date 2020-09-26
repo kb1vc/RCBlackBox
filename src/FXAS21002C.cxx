@@ -142,8 +142,8 @@ namespace BlackBox {
       // and set the watermark at 16 -- once we have this many samples, we
       // will get an interrupt on pin 1.
       writeByte(F_SETUP_RW, FS_MODE_STOP | (FS_WMRK_M & 16));
-      // LPF at 8 Hz, limit range to about 3 RPS?
-      writeByte(CTRL_REG0_RW, CR0_LPF_L | CR0_HPF_3 | CR0_HPF_EN | CR0_RANGE_500);
+      // LPF at 8 Hz, limit range to about 3 RPS? was L, 3
+      writeByte(CTRL_REG0_RW, CR0_LPF_H | CR0_HPF_0 | ( 0 * CR0_HPF_EN) | CR0_RANGE_500);
       scale_factor = 500.0 / 32768.0;  // because we chose the range as 500...
       
       // FIFO interrupt on int1 pin

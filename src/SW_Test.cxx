@@ -10,8 +10,8 @@ int main() {
   BlackBox::PIIORaw piio;
   // BlackBox::PIIOD piio;   
 
-  const int sw_pin = 14;
-  const int led_pin = 15;  
+  const int sw_pin = 22;
+  const int led_pin = 27;  
   BlackBox::Switch sw(&piio, sw_pin, 50000);
   BlackBox::Lamp led(&piio, led_pin, 8);
 

@@ -34,12 +34,10 @@ namespace BlackBox {
 
   bool Lamp::blink(bool blink_en) {
     if(blink_en) {
-      std::cerr << "Blink on\n";
       piio_p->setPWMFrequency(pin_num, 0);
       piio_p->setPWM(pin_num, 16);
     }
     else {
-      std::cerr << "Blink off\n";      
       piio_p->setPWMFrequency(pin_num, 100);
     }
     return true;
