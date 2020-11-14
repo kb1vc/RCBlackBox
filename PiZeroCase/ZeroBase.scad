@@ -2,6 +2,7 @@
 
 $fn=32; // round things are drawn in 32 segments
 
+Epsilon = 0.001;
 // dimensions in inches
 WallThickness = 0.075;
 InnerWidth = 1.25;
@@ -35,12 +36,39 @@ PinSpaceW = mm_pinW / 25.4;
 PinLocRL = (mm_pinOffL / 25.4) + MountHoleOffsetL;
 PinLocRW = (mm_pinOffW / 25.4) + MountHoleOffsetW;
 
+CornerPostOuter = 0.2;
 
 SlotW = 0.5;
 SlotStartL = InnerLength * 0.15;
 SlotL = InnerLength * 0.75;
 
 SlotStartW = 0.7;
+
+module CornerPost(x, y)
+{
+  cph = 2 * InnerHeight;
+  difference() {
+    cube([x, y, cph]);
+    translate([WallThickness, WallThickness, -Epsilon])
+      cube([x, y, cph + 2 * Epsilon]);
+  }
+}
+
+module CornerPosts() {
+  translate([WallThickness, OuterWidth - WallThickness, WallThickness])
+    rotate([0, 0, -90])
+      CornerPost(CornerPostOuter * 0.5, CornerPostOuter);
+  translate([OuterLength - WallThickness, OuterWidth - WallThickness, WallThickness])
+    rotate([0, 0, 180])
+      CornerPost(CornerPostOuter, CornerPostOuter);
+  translate([OuterLength - WallThickness, WallThickness, WallThickness])
+    rotate([0, 0, 90])
+      CornerPost(CornerPostOuter, CornerPostOuter);
+  // the whole post won't fit in this corner, as it fouls the camera
+  translate([2 * WallThickness, WallThickness, WallThickness])
+    CornerPost(CornerPostOuter,   WallThickness);
+  
+}
 
 
 module Pedestal(dir) {
@@ -92,13 +120,16 @@ module BasePlate() {
 }
 
 scale([25.4,25.4,25.4]) {
-  difference() {
-    union() {
-      BasePlate();
-      Walls();
-    }
-    union() {
-      ReliefSlots();
-    }
+  union() {
+     CornerPosts();  
+     difference() {
+       union() {
+         BasePlate();
+         Walls();
+       }
+       union() {
+         ReliefSlots();
+       }
+     }
   }
 }

@@ -9,7 +9,7 @@ InnerWidth = 1.25;
 InnerLength = 3.0;
 OuterWidth = InnerWidth + 2 * WallThickness;
 OuterLength = InnerLength + 2 * WallThickness;
-InnerHeight = 1.25 - (0.3 + WallThickness);
+InnerHeight = 1.55 - (0.3 + WallThickness);
 
 OuterHeight = InnerHeight + 2 * WallThickness;
 
@@ -19,13 +19,15 @@ ConnSlotL = 1.0;
 ConnSlotOffset = 0.45;
 ConnSlotHeight = 0.2; 
 
-LEDHoleX = 1.075;
-LEDHoleY = OuterWidth - 1;
+SwitchHoleX = OuterLength - 1.1;
+SwitchHoleY = OuterWidth - 0.27;
+SwitchDia = 0.37;
 
-PlugHoleX = 0.675;
-PlugHoleY = LEDHoleY;
-PlugHoleL = 0.4;
-PlugHoleW = 0.3;
+VentHoleDia = 0.2;
+VentHoleZ = OuterHeight * 0.25;
+VentHoleSpace = OuterLength * 0.1;
+VentHoleCount = 8; 
+VentHoleX = 0.5 * (OuterLength - VentHoleCount * VentHoleSpace);
 
 PedestalHeight = 0.2;
 PinHeight = PedestalHeight + 0.15;
@@ -48,14 +50,6 @@ PinSpaceL = mm_pinL / 25.4;
 PinSpaceW = mm_pinW / 25.4;
 PinLocRL = (mm_pinOffL / 25.4) + MountHoleOffsetL;
 PinLocRW = (mm_pinOffW / 25.4) + MountHoleOffsetW;
-
-SwitchL = 2.7;
-SwitchW = 1.5;
-LED_L = 2.2;
-LED_W = 1.5;
-
-SwitchDia = 0.2625;
-LED_Dia = 0.22;
 
 SlotW = 0.5;
 SlotStartL = InnerLength * 0.15;
@@ -98,14 +92,17 @@ module TopSlot() {
 }
 
 
-module LEDSlot() {
-   translate([LEDHoleX, LEDHoleY, -Epsilon])
-     cylinder(d=LED_Dia, h = 1, center=true);
+module SwitchSlot() {
+   translate([SwitchHoleX, SwitchHoleY, -Epsilon])
+     cylinder(d=SwitchDia, h = 1, center=true);
 }
 
-module PlugSlot() {
-   translate([PlugHoleX, PlugHoleY, -Epsilon])
-     cube([PlugHoleW, PlugHoleL, 1], center=true);
+module VentHoles() {
+  for(hn = [0:VentHoleCount]) {
+    translate([VentHoleX + VentHoleSpace * hn,
+               -Epsilon, VentHoleZ])
+	     rotate([-90, 0, 0]) cylinder(d = VentHoleDia, h = OuterWidth * 10);
+  }
 }
 
 module ConnSlot() {
@@ -129,11 +126,13 @@ scale([25.4,25.4,25.4]) {
        translate([-2*WallThickness, OuterWidth - (CameraSlotL + CameraWid), OuterHeight - CameraWid + 0.01])
          cube([10*WallThickness, CameraWid, CameraWid]);
 
-       LEDSlot();
-       PlugSlot();
+       SwitchSlot();
 
        ConnSlot();
        PigTailSlot();
+
+       VentHoles();
+       translate([0, 0, 1.5 * VentHoleSpace]) VentHoles();
      }
    }
  }
