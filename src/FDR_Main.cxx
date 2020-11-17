@@ -47,7 +47,19 @@ public:
   bool no_sensors, no_camera;
   bool enable_pio_server; 
 };
+
+int fiddleNetwork(bool on) {
+  const char * state = on ? "up" : "down";
+
+  int pid = fork();
+  if(pid == 0) {
+    int stat = execl("/sbin/ip", "/sbin/ip", "link", "set", "wlan0", state, NULL);
+
+    std::cerr << "execl got " << stat << " errno = " << errno << "\n";
+  }
   
+  return 0;
+}
 
 int main(int argc, char * argv[]) {
   // create a connection. We're going to use
@@ -58,6 +70,11 @@ int main(int argc, char * argv[]) {
 
   bool use_piio_server = ((argc > 1) && (argv[1][0] == 'd'));
 
+  // Some RC receivers have trouble when the pi
+  // starts yelling to find a wireless network.
+  // we need to shut the wireless network off.
+  fiddleNetwork(false);
+  
   // open the fdr object.
   BlackBox::FDR fdr(options.usePIOServer(), options.enableCamera(), options.enableSensors());
   
@@ -73,5 +90,8 @@ int main(int argc, char * argv[]) {
     std::cerr.flush();
     sync();
     reboot(LINUX_REBOOT_CMD_POWER_OFF);
+  }
+  else {
+    fiddleNetwork(true);  
   }
 }

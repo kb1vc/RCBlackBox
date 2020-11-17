@@ -68,12 +68,13 @@ namespace BlackBox {
     sw_p->waitForSwitch(false); 
     sw_p->waitForSwitch(true);
 
-    
     std::cerr << "Ready to start\n";
 
     // show that we're running. 
     led_p->blink(true);
 
+    sleep(10);
+    
     // start the gyro
     if(gyro_p != NULL) {
       gyro_p->start(BlackBox::FXAS21002C::CR1_DATA_RATE_25);
